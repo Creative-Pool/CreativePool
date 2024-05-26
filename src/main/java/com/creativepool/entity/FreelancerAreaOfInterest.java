@@ -19,7 +19,7 @@ public class FreelancerAreaOfInterest {
     @Column(name = "ID")
     private UUID id;
 
-    @Column(name = "FreelancerID")
+    @Column(name = "freelancer_id")
     private UUID freelancerId;
 
     @Column(name = "AreaOfInterestID")

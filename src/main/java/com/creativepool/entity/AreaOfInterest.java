@@ -13,12 +13,12 @@ import java.util.UUID;
 public class AreaOfInterest {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "ID")
+    @Column(name = "id")
     private UUID id;
 
-    @Column(name = "InterestArea")
+    @Column(name = "interest_area")
     private String interestArea;
 
-    @Column(name = "InterestDescription")
+    @Column(name = "interest_description")
     private String interestDescription;
 }

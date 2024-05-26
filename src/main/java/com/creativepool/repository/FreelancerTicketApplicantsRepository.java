@@ -13,6 +13,6 @@ import java.util.UUID;
 public interface FreelancerTicketApplicantsRepository extends JpaRepository<FreelancerTicketApplicants, UUID> {
     void deleteByTicketID(UUID ticketId);
 
-    @Query("select fta from freelancer_ticketapplicants fta where fta.ticketID=: ticketId and fta.userType=: userType")
+    @Query("select fta from freelancerticketapplicants fta where fta.ticketID=: ticketId and fta.userType=: userType")
     Optional<FreelancerTicketApplicants>  findTicketApplicants(UUID ticketId, UserType userType);
 }

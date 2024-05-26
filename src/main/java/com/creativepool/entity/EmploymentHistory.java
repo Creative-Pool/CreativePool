@@ -18,12 +18,12 @@ public class EmploymentHistory {
     @Column(name = "ID")
     private UUID id;
 
-    @Column(name = "Freelancer_ID")
+    @Column(name = "freelancer_id")
     private UUID freelancerId;
 
-    @Column(name = "PastWork")
+    @Column(name = "past_work")
     private String pastWork;
 
-    @Column(name = "URLs")
+    @Column(name = "urls")
     private String urls;
 }

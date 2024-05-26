@@ -9,20 +9,20 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name = "freelancer_ticketapplicants")
+@Entity(name = "freelancerticketapplicants")
 public class FreelancerTicketApplicants {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "ID")
     private UUID id;
 
-    @Column(name = "Freelancer_ID")
+    @Column(name = "freelancer_id")
     private UUID freelancerID;
 
-    @Column(name = "Ticket_ID")
+    @Column(name = "ticket_id")
     private UUID  ticketID;
 
-    @Column(name="User_Type")
+    @Column(name="user_type")
     @Enumerated(EnumType.ORDINAL)
     private UserType userType;
 

@@ -25,10 +25,10 @@ public class UserEntity {
     @Column(name = "lastname")
     private String lastName;
 
-    @Column(name = "Phone")
+    @Column(name = "phone")
     private String phone;
 
-    @Column(name = "Email")
+    @Column(name = "email")
     private String email;
 
     @Column(name = "isactive")
@@ -37,27 +37,27 @@ public class UserEntity {
     @Column(name = "isdeleted")
     private Boolean isDeleted;
 
-    @Column(name = "profileimage")
+    @Column(name = "profile_image")
     private String profileImage;
 
-    @Column(name = "createddate")
+    @Column(name = "created_date")
     private Date createdDate;
 
-    @Column(name = "updateddate")
+    @Column(name = "updated_date")
     private Date updatedDate;
 
-    @Column(name = "dateofbirth")
+    @Column(name = "date_of_birth")
     private Date dateOfBirth;
 
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "gender")
     private Gender gender;
 
-    @Column(name = "City")
+    @Column(name = "city")
     private String city;
 
     @Enumerated(EnumType.ORDINAL)
-    @Column(name="usertype")
+    @Column(name="user_type")
     private UserType userType;
 
 }

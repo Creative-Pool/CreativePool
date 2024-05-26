@@ -43,6 +43,7 @@ public class UserService {
             userEntity.setUsername(user.getUsername());
             userEntity.setUserType(user.getUserType());
             userEntity.setCreatedDate(new Date());
+            userEntity.setProfileImage(userEntity.getProfileImage());
             userEntity.setIsActive(true);
             userEntity.setIsDeleted(false);
             userEntity.setEmail(user.getEmail());
@@ -54,7 +55,7 @@ public class UserService {
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage().contains("account_email_key"))
                 throw new DataIntegrityViolationException(Errors.E00006.getMessage());
-            if (e.getMessage().contains("unique_phone_no"))
+            if (e.getMessage().contains("account_phone_key"))
                 throw new DataIntegrityViolationException(Errors.E00007.getMessage());
         }
     }
@@ -112,7 +113,6 @@ public class UserService {
             userEntity.setGender(profile.getGender());
             userEntity.setDateOfBirth(profile.getDateOfBirth());
             userEntity.setProfileImage(profile.getProfileImage());
-
 
 
             Client client = new Client();

@@ -80,11 +80,11 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new BadRequestException(String.format(Errors.E00004.getMessage(),ticketId)));
 
         Integer totalTicketsAssigned=freelancerRepository.getTotalTicketsAssigned(freelancerId);
-
+        totalTicketsAssigned++;
         if(totalTicketsAssigned>5){
             throw new IllegalStateException(Errors.E00008.getMessage());
         }
-        freelancerRepository.updateTotalTicketsAssigned(totalTicketsAssigned++,freelancerId);
+        freelancerRepository.updateTotalTicketsAssigned(totalTicketsAssigned,freelancerId);
         ticket.setFreelancerId(freelancerId);
         Ticket savedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(savedTicket);

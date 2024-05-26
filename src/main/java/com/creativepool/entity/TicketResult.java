@@ -15,15 +15,15 @@ import java.util.UUID;
 public class TicketResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ResultId")
+    @Column(name = "result_id")
     private Integer resultId;
 
-    @Column(name = "TICKET_ID")
+    @Column(name = "ticket_id")
     private UUID ticketId;
 
-    @Column(name = "ImageURL")
+    @Column(name = "image_url")
     private String imageURL;
 
-    @Column(name = "VideoURL")
+    @Column(name = "video_url")
     private String videoURL;
 }

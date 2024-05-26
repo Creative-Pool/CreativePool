@@ -21,6 +21,6 @@ public class Client {
     @Column(name = "user_id")
     private UUID userID;
 
-    @Column(name = "Rating")
+    @Column(name = "rating")
     private Double rating;
 }

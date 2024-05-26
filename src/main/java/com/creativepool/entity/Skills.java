@@ -14,15 +14,15 @@ import java.util.UUID;
 public class Skills {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "ID")
+    @Column(name = "id")
     private UUID id;
 
-    @Column(name = "SkillName")
+    @Column(name = "skill_name")
     private String skillName;
 
-    @Column(name = "YearsOfExperience")
+    @Column(name = "year_of_experience")
     private Integer yearsOfExperience;
 
-    @Column(name = "Freelancer_ID")
+    @Column(name = "freelancer_id")
     private UUID freelancerId;
 }

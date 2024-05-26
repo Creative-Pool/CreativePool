@@ -14,22 +14,22 @@ public class Freelancer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "ID", columnDefinition = "uuid", updatable = false)
+    @Column(name = "freelancer_id", columnDefinition = "uuid", updatable = false)
     private UUID id;
 
-    @Column(name = "USER_ID")
+    @Column(name = "user_id")
     private UUID userID;
 
-    @Column(name = "Rating")
+    @Column(name = "rating")
     private Double rating;
 
-    @Column(name = "BIO")
+    @Column(name = "bio")
     private String bio;
 
     @Enumerated(EnumType.ORDINAL)
-    @Column(name = "educationalqualification")
+    @Column(name = "educational_qualification")
     private EducationalQualificationType educationalQualification;
 
-    @Column(name = "TotalAssignedTickets")
+    @Column(name = "total_assigned_ticket")
     private Integer totalAssignedTickets;
 }
