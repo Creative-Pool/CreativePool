@@ -8,12 +8,22 @@ import com.creativepool.models.User;
 import com.creativepool.repository.ClientRepository;
 import com.creativepool.repository.FreelancerRepository;
 import com.creativepool.repository.UserRepository;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import org.apache.commons.lang3.ObjectUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +39,28 @@ public class UserService {
 
     @Autowired
     ClientRepository clientRepository;
+
+
+    @Value("${spring.cloud.gcp.storage.bucket}")
+    private String bucketName;
+
+    @Value("${credential.file}")
+    private String credentials;
+
+    @Value("${project.id}")
+    private String projectId;
+
+    private final Storage storage;
+
+    public UserService() throws IOException {
+        Credentials credentials = GoogleCredentials
+                .fromStream(new FileInputStream("C:\\Users\\DELL\\Downloads\\useful-approach-425016-a9-32375cbda0b3.json"));
+        storage = StorageOptions.newBuilder().setCredentials(credentials)
+                .setProjectId("useful-approach-425016-a9").build().getService();
+    }
+
+
+
 
     public void createUser(User user) {
         try {
@@ -60,34 +92,35 @@ public class UserService {
         }
     }
 
-    public void createProfile(Profile profile) {
+    public void createProfile(Profile profile,MultipartFile file) {
         try {
             switch (profile.getUserType().toString()) {
                 case "FREELANCER":
-                    createFreelancerProfile(profile);
+                    createFreelancerProfile(profile,file);
                     break;
                 case "CLIENT":
                     createClientProfile(profile);
                     break;
             }
-        } catch (DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException | IOException e) {
             throw new DataIntegrityViolationException(Errors.E00005.getMessage());
         }
     }
 
-    private void createFreelancerProfile(Profile profile) {
+    private void createFreelancerProfile(Profile profile,MultipartFile file) throws IOException {
 
             Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
             UserEntity userEntity;
             if (optionalUserEntity.isPresent()) {
-                userEntity = optionalUserEntity.get();
+                String profileUrl=null;
+                if(!file.isEmpty())
+                    profileUrl=uploadFile(file);
 
+                userEntity = optionalUserEntity.get();
                 userEntity.setCity(profile.getCity());
                 userEntity.setGender(profile.getGender());
                 userEntity.setDateOfBirth(profile.getDateOfBirth());
                 userEntity.setProfileImage(profile.getProfileImage());
-
-
                 Freelancer freelancer = new Freelancer();
                 freelancer.setId(UUID.randomUUID());
                 freelancer.setBio(profile.getBio());
@@ -179,6 +212,19 @@ public class UserService {
         profile.setProfileImage(userEntity.getProfileImage());
         profile.setUserType(userEntity.getUserType());
         profile.setPhone(userEntity.getPhone());
+    }
+
+    private String uploadFile(MultipartFile file) throws IOException {
+
+        String blobName = file.getOriginalFilename();
+        BlobInfo blobInfo = storage.create(
+                BlobInfo.newBuilder(bucketName, blobName).build(),
+                file.getBytes()
+        );
+
+
+        System.out.println("Hello "+blobInfo.getMediaLink());
+        return blobInfo.getMediaLink();
     }
 
 }

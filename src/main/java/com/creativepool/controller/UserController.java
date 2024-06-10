@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -26,9 +27,8 @@ public class UserController {
     }
 
     @PostMapping("/create-profile")
-    public ResponseEntity<Void> createProfile(@RequestBody Profile profile) {
-        userService.createProfile(profile);
-
+    public ResponseEntity<Void> createProfile(@RequestPart("profile") Profile profile, @RequestPart(value = "file", required = false) MultipartFile file) {
+        userService.createProfile(profile,file);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
