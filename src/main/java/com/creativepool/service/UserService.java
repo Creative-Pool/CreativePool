@@ -11,6 +11,7 @@ import com.creativepool.repository.UserRepository;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.apache.commons.lang3.ObjectUtils;
@@ -24,9 +25,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService {
@@ -54,7 +55,7 @@ public class UserService {
 
     public UserService() throws IOException {
         Credentials credentials = GoogleCredentials
-                .fromStream(new FileInputStream("C:\\Users\\DELL\\Downloads\\useful-approach-425016-a9-32375cbda0b3.json"));
+                .fromStream(new FileInputStream("C:\\Users\\DELL\\Downloads\\Useful-approach-425016-a9-e39523dcc150.json"));
         storage = StorageOptions.newBuilder().setCredentials(credentials)
                 .setProjectId("useful-approach-425016-a9").build().getService();
     }
@@ -215,16 +216,23 @@ public class UserService {
     }
 
     private String uploadFile(MultipartFile file) throws IOException {
-
         String blobName = file.getOriginalFilename();
         BlobInfo blobInfo = storage.create(
                 BlobInfo.newBuilder(bucketName, blobName).build(),
                 file.getBytes()
         );
+//        Map<String, String> extensionHeaders = new HashMap<>();
+//        extensionHeaders.put("Content-Type", "application/octet-stream");
 
-
-        System.out.println("Hello "+blobInfo.getMediaLink());
-        return blobInfo.getMediaLink();
+        URL url =
+                storage.signUrl(
+                        blobInfo,
+                        15,
+                        TimeUnit.MINUTES,
+                        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
+                        Storage.SignUrlOption.withV4Signature());
+        System.out.println("Generated PUT signed URL:" + url);
+        return url.toString();
     }
 
 }

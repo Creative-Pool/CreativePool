@@ -22,4 +22,10 @@ public class GlobalExceptionHandler {
         ApiException apiException=new ApiException(ex.getMessage(), HttpStatus.CONFLICT);
         return  new ResponseEntity<>(apiException,HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(CreativePoolException.class)
+    public ResponseEntity<ApiException> handleException(CreativePoolException ex) {
+        ApiException apiException=new ApiException(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return  new ResponseEntity<>(apiException,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

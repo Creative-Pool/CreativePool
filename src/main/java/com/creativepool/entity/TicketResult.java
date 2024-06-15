@@ -11,12 +11,12 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "TicketResult")
+@Entity(name = "ticketresult")
 public class TicketResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "result_id")
-    private Integer resultId;
+    private UUID resultId;
 
     @Column(name = "ticket_id")
     private UUID ticketId;
