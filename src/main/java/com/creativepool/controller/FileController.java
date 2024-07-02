@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/creative-pool/files")
-public class FileController {
+public class FileController{
 
     @Autowired
     private FileService fileService;
