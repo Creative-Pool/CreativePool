@@ -2,8 +2,10 @@ package com.creativepool.controller;
 
 
 import com.creativepool.entity.UserType;
+import com.creativepool.models.PaginatedResponse;
 import com.creativepool.models.Profile;
 import com.creativepool.models.User;
+import com.creativepool.models.UserSearchRequest;
 import com.creativepool.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,6 +38,12 @@ public class UserController {
     public ResponseEntity<Profile> createProfile(@RequestParam(name = "id") UUID id,@RequestParam(name = "userType") UserType userType) {
         Profile profile=userService.getProfile(id,userType);
         return new ResponseEntity<>(profile,HttpStatus.OK);
+    }
+
+    @PostMapping("/user/search")
+    public ResponseEntity<PaginatedResponse<Profile>> searchUser(@RequestBody UserSearchRequest userSearchRequest) {
+        return new ResponseEntity<>(userService.searchUser(userSearchRequest),HttpStatus.OK);
+
     }
 
 

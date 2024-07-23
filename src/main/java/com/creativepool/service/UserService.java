@@ -3,8 +3,10 @@ package com.creativepool.service;
 import com.creativepool.constants.Errors;
 import com.creativepool.entity.*;
 import com.creativepool.exception.BadRequestException;
+import com.creativepool.models.PaginatedResponse;
 import com.creativepool.models.Profile;
 import com.creativepool.models.User;
+import com.creativepool.models.UserSearchRequest;
 import com.creativepool.repository.ClientRepository;
 import com.creativepool.repository.FreelancerRepository;
 import com.creativepool.repository.UserRepository;
@@ -14,6 +16,9 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
+import jakarta.persistence.StoredProcedureQuery;
 import org.apache.commons.lang3.ObjectUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +30,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +57,9 @@ public class UserService {
 
     @Value("${project.id}")
     private String projectId;
+
+    @Autowired
+    EntityManager entityManager;
 
     private final Storage storage;
 
@@ -233,6 +243,70 @@ public class UserService {
                         Storage.SignUrlOption.withV4Signature());
         System.out.println("Generated PUT signed URL:" + url);
         return url.toString();
+    }
+
+
+    public PaginatedResponse<Profile> searchUser(UserSearchRequest userSearchRequest) {
+        // Validate pagination parameters
+        Integer page = userSearchRequest.getPage();
+        Integer size = userSearchRequest.getSize();
+        if (page == null || size == null) {
+            throw new BadRequestException(Errors.E00001.getMessage());
+        }
+
+        // Prepare search parameters
+        BigDecimal rating = userSearchRequest.getRating() != null ? BigDecimal.valueOf(userSearchRequest.getRating()) : null;
+        BigDecimal[] priceRange = parsePriceRange(userSearchRequest.getPriceRange());
+        BigDecimal minPrice = priceRange[0];
+        BigDecimal maxPrice = priceRange[1];
+
+        // Perform search with pagination
+        List<Object[]> result = userRepository.searchUserData(rating, minPrice, maxPrice, page, size);
+
+        // Process search results
+        List<Profile> profiles = new ArrayList<>();
+        long totalRowCount = 0;
+
+        for (Object[] row : result) {
+            Profile profile = mapRowToProfile(row);
+            profiles.add(profile);
+            totalRowCount = (long) row[11]; // Assuming row count is the last column
+        }
+
+        // Calculate pagination details
+        boolean isLastPage = ((page + 1) * size >= totalRowCount);
+        Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
+
+        return new PaginatedResponse<>(totalRowCount, profiles, isLastPage, page + 1, totalPages);
+    }
+
+    private BigDecimal[] parsePriceRange(String priceRange) {
+        if (priceRange == null) {
+            return new BigDecimal[]{null, null};
+        }
+
+        String[] parts = priceRange.split("-");
+        BigDecimal minPrice = parts.length > 0 ? new BigDecimal(parts[0]) : null;
+        BigDecimal maxPrice = parts.length > 1 ? new BigDecimal(parts[1]) : null;
+
+        return new BigDecimal[]{minPrice, maxPrice};
+    }
+
+    private Profile mapRowToProfile(Object[] row) {
+        Profile profile = new Profile();
+        profile.setUsername((String) row[0]);
+        profile.setFirstName((String) row[1]);
+        profile.setLastName((String) row[2]);
+        profile.setPhone((String) row[3]);
+        profile.setEmail((String) row[4]);
+        profile.setProfileImage((String) row[5]);
+        profile.setDateOfBirth((Date) row[6]);
+        profile.setGender(Gender.values()[(Integer) row[7]]);
+        profile.setCity((String) row[8]);
+        profile.setRating(((BigDecimal) row[9]).doubleValue());
+        profile.setMinCharges((BigDecimal) row[10]);
+
+        return profile;
     }
 
 }

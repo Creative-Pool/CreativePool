@@ -10,6 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.UUID;
 
@@ -31,4 +33,5 @@ public class Profile {
     private String bio;
     private UserType userType;
     private EducationalQualificationType educationalQualification;
+    private BigDecimal minCharges;
 }

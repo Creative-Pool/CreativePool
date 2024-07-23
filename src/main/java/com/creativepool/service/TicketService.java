@@ -7,21 +7,20 @@ import com.creativepool.entity.Ticket;
 import com.creativepool.entity.TicketStatus;
 import com.creativepool.entity.UserType;
 import com.creativepool.exception.BadRequestException;
-import com.creativepool.models.TicketDTO;
-import com.creativepool.models.TicketResponseDTO;
+import com.creativepool.models.*;
 import com.creativepool.repository.FreelancerRepository;
 import com.creativepool.repository.FreelancerTicketApplicantsRepository;
 import com.creativepool.repository.TicketRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 import java.util.stream.Collectors;
-
-
-import java.util.Arrays;
-import java.util.List;
 
 @Service
 public class TicketService {
@@ -114,5 +113,115 @@ public class TicketService {
         freelancerTicketApplicantsRepository.deleteByTicketID(ticketId);
         // Delete the ticket
         ticketRepository.delete(ticket);
+    }
+
+
+    public PaginatedResponse<TicketSearchResponse> searchUser(TicketSearchRequest ticketSearchRequest) {
+
+
+
+        Integer page = ticketSearchRequest.getPage();
+        Integer size = ticketSearchRequest.getSize();
+
+        if (page == null || size == null) {
+            throw new BadRequestException(Errors.E00001.getMessage());
+        }
+
+        BigDecimal rating = (ticketSearchRequest.getRating() != null)
+                ? BigDecimal.valueOf(ticketSearchRequest.getRating())
+                : null;
+
+        Integer ticketStatus = (ticketSearchRequest.getTicketStatus() != null)
+                ? ticketSearchRequest.getTicketStatus().ordinal()
+                : null;
+
+        // Fetching and parsing price range
+        BigDecimal[] priceRange = parsePriceRange(ticketSearchRequest.getPriceRange());
+        BigDecimal minPrice = (priceRange[0] != null) ? priceRange[0] : null;
+        BigDecimal maxPrice = (priceRange[1] != null) ? priceRange[1] : null;
+
+        // Fetching other parameters
+        String complexity = (ticketSearchRequest.getComplexity() != null && !ticketSearchRequest.getComplexity().isEmpty())
+                ? ticketSearchRequest.getComplexity()
+                : null;
+
+        Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
+        Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
+        Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
+
+        List<Object[]> result = ticketRepository.searchTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,page, size);
+        System.out.println(result.get(0).length);
+        List<TicketSearchResponse> responses=convertToResponse(result);
+        long totalRowCount = (long)result.get(0)[17];
+        boolean isLastPage = ((page + 1) * size >= totalRowCount);
+        Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
+
+
+        return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
+
+
+    }
+
+    private BigDecimal[] parsePriceRange(String priceRange) {
+        if (priceRange == null) {
+            return new BigDecimal[]{null, null};
+        }
+
+        String[] parts = priceRange.split("-");
+        BigDecimal minPrice = parts.length > 0 ? new BigDecimal(parts[0]) : null;
+        BigDecimal maxPrice = parts.length > 1 ? new BigDecimal(parts[1]) : null;
+
+        return new BigDecimal[]{minPrice, maxPrice};
+    }
+
+    private Date[] parseDateRange(String dates) {
+
+        SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        if (dates == null || dates.isEmpty()) {
+            return new Date[] { null, null };
+        }
+        try {
+            String[] parts = dates.split(" to ");
+            String startDateString = parts[0].trim() + " 00:00:00.000";
+            String endDateString = parts[1].trim() + " 23:59:59.999";
+            Date startDate = DATE_TIME_FORMATTER.parse(startDateString);
+            Date endDate = DATE_TIME_FORMATTER.parse(endDateString);
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(endDate);
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            endDate = calendar.getTime();
+
+            return new Date[] { startDate, endDate };
+        } catch (ParseException | ArrayIndexOutOfBoundsException e) {
+            // Handle parsing error or invalid format
+            return new Date[] { null, null };
+        }
+    }
+
+    private List<TicketSearchResponse> convertToResponse(List<Object[]> result) {
+        List<TicketSearchResponse> responses = new ArrayList<>();
+        for (Object[] row : result) {
+            TicketSearchResponse response = new TicketSearchResponse();
+            response.setTicketID((UUID) row[0]);
+            response.setTitle((String) row[1]);
+            response.setDescription((String) row[2]);
+            response.setReporterName((String) row[3]);
+            response.setCreatedDate((Date) row[4]);
+            response.setPrice(((BigDecimal) row[5]).doubleValue());
+            response.setTicketDeadline((Date) row[6]);
+            response.setImages((String) row[7]);
+            response.setUrl((String) row[8]);
+            response.setTicketStatus(TicketStatus.values()[(Integer) row[9]]);
+            response.setFreelancerId((UUID) row[10]);
+            response.setClientId((UUID) row[11]);
+            response.setUsername((String) row[12]);
+            response.setClientFirstName((String) row[13]);
+            response.setClientLastName((String) row[14]);
+            response.setRating(((BigDecimal) row[15]).doubleValue());
+            response.setComplexity((String) row[16]);
+            responses.add(response);
+        }
+        return responses;
     }
 }

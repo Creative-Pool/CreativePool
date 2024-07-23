@@ -1,8 +1,7 @@
 package com.creativepool.controller;
 
 import com.creativepool.entity.UserType;
-import com.creativepool.models.TicketDTO;
-import com.creativepool.models.TicketResponseDTO;
+import com.creativepool.models.*;
 import com.creativepool.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,6 +49,11 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PostMapping("/ticket/search")
+    public ResponseEntity<PaginatedResponse<TicketSearchResponse>> searchUser(@RequestBody TicketSearchRequest ticketSearchRequest) {
+        return new ResponseEntity<>(ticketService.searchUser(ticketSearchRequest),HttpStatus.OK);
+
+    }
 
 
 
