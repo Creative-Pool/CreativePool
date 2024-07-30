@@ -52,4 +52,7 @@ public class Ticket {
 
     @Column(name = "client_id")
     private UUID clientId;
+
+    @Column(name = "complexity")
+    private String ticketComplexity;
 }

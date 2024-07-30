@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -26,4 +27,11 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
             @Param("page") Integer page,
             @Param("size") Integer size
     );
+
+
+    @Query(value = "select count(*) from ticket where freelancer_id= :freelancerId",nativeQuery = true)
+    public BigInteger fetchTotalTicketsAssignedToFreelancer(UUID freelancerId);
+
+    @Query(value = "select count(*) from ticket where client_id= :clientId",nativeQuery = true)
+    public BigInteger fetchTotalTicketsAssignedToClient(UUID clientId);
 }

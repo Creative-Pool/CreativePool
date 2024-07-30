@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -14,7 +15,7 @@ public class Freelancer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "freelancer_id", columnDefinition = "uuid", updatable = false)
+    @Column(name = "freelancer_id", columnDefinition = "uuid")
     private UUID id;
 
     @Column(name = "user_id")
@@ -32,4 +33,8 @@ public class Freelancer {
 
     @Column(name = "total_assigned_ticket")
     private Integer totalAssignedTickets;
+
+    @Column(name="min_charges")
+    private BigDecimal minimumCharges;
+
 }

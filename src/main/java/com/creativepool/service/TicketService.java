@@ -47,6 +47,7 @@ public class TicketService {
         ticket.setCreatedDate(new Date());
         ticket.setClientId(ticketDTO.getClientId());
         ticket.setTicketStatus(TicketStatus.OPEN); // or any default status
+        ticket.setTicketComplexity(ticketDTO.getTicketComplexity());
 
         Ticket savedTicket = ticketRepository.save(ticket);
 

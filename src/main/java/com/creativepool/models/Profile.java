@@ -34,4 +34,6 @@ public class Profile {
     private UserType userType;
     private EducationalQualificationType educationalQualification;
     private BigDecimal minCharges;
+    private WorkHistory workHistory;
+
 }

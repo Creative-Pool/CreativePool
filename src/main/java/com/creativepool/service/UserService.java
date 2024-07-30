@@ -3,10 +3,7 @@ package com.creativepool.service;
 import com.creativepool.constants.Errors;
 import com.creativepool.entity.*;
 import com.creativepool.exception.BadRequestException;
-import com.creativepool.models.PaginatedResponse;
-import com.creativepool.models.Profile;
-import com.creativepool.models.User;
-import com.creativepool.models.UserSearchRequest;
+import com.creativepool.models.*;
 import com.creativepool.repository.ClientRepository;
 import com.creativepool.repository.FreelancerRepository;
 import com.creativepool.repository.UserRepository;
@@ -25,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
@@ -179,18 +177,18 @@ public class UserService {
     }
 
 
-    private Profile getFreelancerProfile(UUID id){
-        Profile profile=new Profile();
-        Optional<Freelancer> optionalFreelancerID = freelancerRepository.findById(id);
-
-        if(optionalFreelancerID.isPresent()) {
-            Freelancer freelancer = optionalFreelancerID.get();
-            UserEntity userEntity = userRepository.findById(freelancer.getUserID()).get();
-            mapUserEntityToProfile(profile,userEntity);
-            profile.setBio(freelancer.getBio());
-            profile.setRating(freelancer.getRating());
-            profile.setEducationalQualification(freelancer.getEducationalQualification());
-
+    private Profile getFreelancerProfile(UUID id) {
+        Profile profile = new Profile();
+        List<Object[]> freelancerObjectArray = freelancerRepository.findFreelancerById(id);
+        if (freelancerObjectArray != null) {
+            UserEntity userEntity = userRepository.findById((UUID) freelancerObjectArray.get(0)[0]).get();
+            mapUserEntityToProfile(profile, userEntity);
+            profile.setRating(((BigDecimal) freelancerObjectArray.get(0)[1]).doubleValue());
+            profile.setBio((String) freelancerObjectArray.get(0)[2]);
+            profile.setEducationalQualification(EducationalQualificationType.values()[(int) freelancerObjectArray.get(0)[3]]);
+            profile.setMinCharges((BigDecimal) freelancerObjectArray.get(0)[4]);
+            WorkHistory workHistory = new WorkHistory((String) freelancerObjectArray.get(0)[5], (String) freelancerObjectArray.get(0)[6], ((BigDecimal) freelancerObjectArray.get(0)[7]).doubleValue());
+            profile.setWorkHistory(workHistory);
         }
         return profile;
     }

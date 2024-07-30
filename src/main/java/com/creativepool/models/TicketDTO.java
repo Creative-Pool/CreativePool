@@ -19,4 +19,6 @@ public class TicketDTO {
     private String images;
     private String url;
     private UUID clientId;
+    private String ticketComplexity;
+
 }
