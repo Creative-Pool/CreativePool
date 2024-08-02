@@ -9,7 +9,7 @@ import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import java.util.Date;
 import java.util.UUID;
 @Data
-@Entity(name = "ACCOUNT")
+@Entity(name = "account")
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
