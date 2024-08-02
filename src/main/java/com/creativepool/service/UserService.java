@@ -167,43 +167,101 @@ public class UserService {
         }
     }
 
-    public Profile getProfile(UUID id, UserType userType) {
+    public Profile getProfile(String phoneNo, UserType userType) {
 
         return switch (userType.toString()) {
-            case "FREELANCER" -> getFreelancerProfile(id);
-            case "CLIENT" -> getClientProfile(id);
+            case "FREELANCER" -> getFreelancerProfile(phoneNo,userType);
+            case "CLIENT" -> getClientProfile(phoneNo,userType);
             default -> new Profile();
         };
     }
 
 
-    private Profile getFreelancerProfile(UUID id) {
+    private Profile getFreelancerProfile(String phoneNo,UserType userType) {
         Profile profile = new Profile();
-        List<Object[]> freelancerObjectArray = freelancerRepository.findFreelancerById(id);
-        if (freelancerObjectArray != null) {
-            UserEntity userEntity = userRepository.findById((UUID) freelancerObjectArray.get(0)[0]).get();
-            mapUserEntityToProfile(profile, userEntity);
-            profile.setRating(((BigDecimal) freelancerObjectArray.get(0)[1]).doubleValue());
-            profile.setBio((String) freelancerObjectArray.get(0)[2]);
-            profile.setEducationalQualification(EducationalQualificationType.values()[(int) freelancerObjectArray.get(0)[3]]);
-            profile.setMinCharges((BigDecimal) freelancerObjectArray.get(0)[4]);
-            WorkHistory workHistory = new WorkHistory((String) freelancerObjectArray.get(0)[5], (String) freelancerObjectArray.get(0)[6], ((BigDecimal) freelancerObjectArray.get(0)[7]).doubleValue());
-            profile.setWorkHistory(workHistory);
+        List<WorkHistory> workHistoryList=new ArrayList<>();
+        List<Object[]> freelancerObjectArray = freelancerRepository.findFreelancerByPhoneNo(phoneNo,userType.ordinal());
+        if(freelancerObjectArray!=null && !freelancerObjectArray.isEmpty()){
+        Object[] row =freelancerObjectArray.get(0);
+        profile.setUserID(row[0] != null ? (UUID) row[0] : null);
+        profile.setFirstName(row[1] != null ? (String) row[1] : null);
+        profile.setLastName(row[2] != null ? (String) row[2] : null);
+        profile.setCity(row[3] != null ? (String) row[3] : null);
+        profile.setEmail(row[4] != null ? (String) row[4] : null);
+        profile.setDateOfBirth(row[5] != null ? (Date) row[5] : null);
+
+        if (row[6] != null) {
+            profile.setGender(Gender.values()[(Integer) row[6]]);
+        } else {
+            profile.setGender(null); // or set to a default value if needed
+        }
+
+        profile.setPhone(row[7] != null ? (String) row[7] : null);
+        profile.setUsername(row[8] != null ? (String) row[8] : null);
+        profile.setProfileImage(row[9] != null ? (String) row[9] : null);
+
+        if (row[10] != null) {
+            profile.setUserType(UserType.values()[(Integer) row[10]]);
+        } else {
+            profile.setUserType(null); // or set to a default value if needed
+        }
+
+        profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
+        profile.setBio(row[12] != null ? (String) row[12] : null);
+
+        if (row[13] != null) {
+            profile.setEducationalQualification(EducationalQualificationType.values()[(Integer) row[13]]);
+        } else {
+            profile.setEducationalQualification(null); // or set to a default value if needed
+        }
+
+        profile.setMinCharges(row[14] != null ? (BigDecimal) row[14] : null);
+
+        if(row[15] != null) {
+            List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15]);
+
+            for (Object[] object : workHistoryObjectArray) {
+                WorkHistory workHistory = new WorkHistory(object[0] != null ? (String) object[0] : null, object[1] != null ? (String) object[1] : null, object[2] != null ? ((BigDecimal) object[2]).doubleValue() : null);
+                workHistoryList.add(workHistory);
+            }
+
+            profile.setWorkHistory(workHistoryList);
+
+        }
         }
         return profile;
     }
 
-    private Profile getClientProfile(UUID id) {
+    private Profile getClientProfile(String phoneNo,UserType userType) {
         Profile profile = new Profile();
-        Optional<Client> optionalClientID = clientRepository.findById(id);
+        List<Object[]> clientObjectArray = clientRepository.findClientByPhoneNo(phoneNo, userType.ordinal());
+        if(clientObjectArray!=null && !clientObjectArray.isEmpty()) {
+            Object[] row = clientObjectArray.get(0);
+            profile.setUserID(row[0] != null ? (UUID) row[0] : null);
+            profile.setFirstName(row[1] != null ? (String) row[1] : null);
+            profile.setLastName(row[2] != null ? (String) row[2] : null);
+            profile.setCity(row[3] != null ? (String) row[3] : null);
+            profile.setEmail(row[4] != null ? (String) row[4] : null);
+            profile.setDateOfBirth(row[5] != null ? (Date) row[5] : null);
 
-        if (optionalClientID.isPresent()) {
-            Client client = optionalClientID.get();
-            UserEntity userEntity = userRepository.findById(client.getUserID()).get();
-            profile.setRating(client.getRating());
-            mapUserEntityToProfile(profile, userEntity);
-        } else {
-            throw new BadRequestException(Errors.E00002.getMessage());
+            if (row[6] != null) {
+                profile.setGender(Gender.values()[(Integer) row[6]]);
+            } else {
+                profile.setGender(null); // or set to a default value if needed
+            }
+
+            profile.setPhone(row[7] != null ? (String) row[7] : null);
+            profile.setUsername(row[8] != null ? (String) row[8] : null);
+            profile.setProfileImage(row[9] != null ? (String) row[9] : null);
+
+            if (row[10] != null) {
+                profile.setUserType(UserType.values()[(Integer) row[10]]);
+            } else {
+                profile.setUserType(null); // or set to a default value if needed
+            }
+
+            profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
+
         }
         return profile;
     }

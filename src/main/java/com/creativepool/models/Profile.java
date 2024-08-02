@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -34,6 +35,6 @@ public class Profile {
     private UserType userType;
     private EducationalQualificationType educationalQualification;
     private BigDecimal minCharges;
-    private WorkHistory workHistory;
+    private List<WorkHistory> workHistory;
 
 }

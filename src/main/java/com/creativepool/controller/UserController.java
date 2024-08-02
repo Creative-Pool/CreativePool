@@ -35,8 +35,8 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<Profile> createProfile(@RequestParam(name = "id") UUID id,@RequestParam(name = "userType") UserType userType) {
-        Profile profile=userService.getProfile(id,userType);
+    public ResponseEntity<Profile> getProfile(@RequestParam(name = "phoneNo") String phoneNo,@RequestParam(name = "userType") UserType userType) {
+        Profile profile=userService.getProfile(phoneNo,userType);
         return new ResponseEntity<>(profile,HttpStatus.OK);
     }
 

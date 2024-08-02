@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 @Repository
 public interface ClientRepository extends JpaRepository<Client, UUID> {
@@ -20,4 +21,7 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
     @Transactional
     @Query("update Client c set c.rating=:rating where c.clientID=:clientId")
     public void updateRating(@Param("rating")Double rating,@Param("clientId") UUID clientId);
+
+    @Query(value = "select ac.user_id,ac.firstname,ac.lastname,ac.city,ac.email,ac.date_of_birth,ac.gender,ac.phone,ac.username,ac.profile_image,ac.user_type,c.rating from account ac left join client c on c.user_id=ac.user_id where ac.phone=:phoneNo and ac.user_Type=:userType",nativeQuery = true)
+    public List<Object[]> findClientByPhoneNo(String phoneNo, Integer userType);
 }
