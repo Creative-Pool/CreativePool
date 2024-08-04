@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,10 +22,19 @@ public class TicketController {
     private TicketService ticketService;
 
     @PostMapping("/create-ticket")
-    public ResponseEntity<TicketResponseDTO> createTicket(@RequestBody TicketDTO ticketDTO) {
-        TicketResponseDTO createdTicket = ticketService.createTicket(ticketDTO);
+    public ResponseEntity<TicketResponseDTO> createTicket( @RequestPart("ticketDTO") TicketDTO ticketDTO,
+                                                           @RequestPart(value = "files",required = false) List<MultipartFile> files) throws IOException {
+        TicketResponseDTO createdTicket = ticketService.createTicket(ticketDTO,files);
         return new ResponseEntity<>(createdTicket, HttpStatus.CREATED);
     }
+
+    @PutMapping("/edit-ticket/{id}")
+    public ResponseEntity<TicketResponseDTO> editTicket(@RequestPart("ticketDTO") TicketDTO ticketDTO,
+                                                        @RequestPart(value = "files",required = false) List<MultipartFile> files) {
+        TicketResponseDTO updatedTicket = ticketService.editTicket(ticketDTO, files);
+        return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+    }
+
 
     @GetMapping("/tickets")
     public ResponseEntity<List<TicketResponseDTO>> getAllTickets() {

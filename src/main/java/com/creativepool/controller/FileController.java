@@ -36,12 +36,12 @@ public class FileController{
 
     @PostMapping("/upload")
     public void uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("ticketId") UUID ticketId) {
-        try {
-            fileService.uploadFile(file,ticketId);
-
-        } catch (IOException e) {
-            throw new CreativePoolException(Errors.E00009.getMessage());
-        }
+//        try {
+//        //    fileService.uploadFile(file,ticketId);
+//
+//        } catch (IOException e) {
+//            throw new CreativePoolException(Errors.E00009.getMessage());
+//        }
     }
 
     @GetMapping("/download")

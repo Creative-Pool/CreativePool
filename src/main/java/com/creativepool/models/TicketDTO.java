@@ -5,12 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class TicketDTO {
+    private UUID ticketId;
     private String title;
     private String description;
     private String reporterName;
@@ -20,5 +22,6 @@ public class TicketDTO {
     private String url;
     private UUID clientId;
     private String ticketComplexity;
+    private List<String> deleteImagesUrl;
 
 }

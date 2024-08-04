@@ -9,6 +9,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import com.google.cloud.storage.BlobInfo;
@@ -34,31 +35,24 @@ public class FileService {
 
     private final Storage storage;
 
-    private final Path fileStorageLocation = Paths.get("file_storage").toAbsolutePath().normalize();
+//    private final Path fileStorageLocation = Paths.get("file_storage").toAbsolutePath().normalize();
 
 
     @Value("${spring.cloud.gcp.storage.bucket}")
     private String bucketName;
 
-    @Value("${credential.file}")
-    private String credentials;
-
-    @Value("${project.id}")
-    private String projectId;
 
     @Autowired
     TicketResultRepository ticketResultRepository;
 
-    public FileService() {
-        try {
-            Credentials credentials = GoogleCredentials
-                    .fromStream(new FileInputStream("C:\\Users\\DELL\\Downloads\\useful-approach-425016-a9-e39523dcc150.json"));
-            storage = StorageOptions.newBuilder().setCredentials(credentials)
-                    .setProjectId("useful-approach-425016-a9").build().getService();
-        } catch (IOException ex) {
-            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
-        }
+    public FileService(@Value("${credential.file}") String credentialFile,@Value("${project.id}") String projectId) throws IOException {
+        Resource resource = new ClassPathResource(credentialFile);
+        Credentials credentials = GoogleCredentials
+                .fromStream(resource.getInputStream());
+        storage = StorageOptions.newBuilder().setCredentials(credentials)
+                .setProjectId(projectId).build().getService();
     }
+
 
     public void uploadFile(MultipartFile file,UUID ticketId) throws IOException {
         String blobName = file.getOriginalFilename();
@@ -85,9 +79,9 @@ public class FileService {
     public Resource loadFileAsResource(UUID resultId) {
         try {
 
-           Optional<TicketResult> ticketResult= ticketResultRepository.findById(resultId);
+            Optional<TicketResult> ticketResult= ticketResultRepository.findById(resultId);
 
-          //  Path filePath = fileStorageLocation.resolve(fileName).normalize();
+            //  Path filePath = fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(ticketResult.get().getVideoURL());
             if (resource.exists()) {
                 return resource;

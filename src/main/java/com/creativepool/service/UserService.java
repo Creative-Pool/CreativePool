@@ -59,6 +59,9 @@ public class UserService {
     @Autowired
     EntityManager entityManager;
 
+    @Autowired
+    UploadService uploadService;
+
     private final Storage storage;
 
     public UserService() throws IOException {
@@ -108,7 +111,7 @@ public class UserService {
                     createFreelancerProfile(profile,file);
                     break;
                 case "CLIENT":
-                    createClientProfile(profile);
+                    createClientProfile(profile,file);
                     break;
             }
         } catch (DataIntegrityViolationException | IOException e) {
@@ -121,15 +124,15 @@ public class UserService {
             Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
             UserEntity userEntity;
             if (optionalUserEntity.isPresent()) {
-                String profileUrl=null;
+                List<String> uploadedUrls=new ArrayList<>();
                 if(!file.isEmpty())
-                    profileUrl=uploadFile(file);
+                    uploadService.uploadFile(file,uploadedUrls);
 
                 userEntity = optionalUserEntity.get();
                 userEntity.setCity(profile.getCity());
                 userEntity.setGender(profile.getGender());
                 userEntity.setDateOfBirth(profile.getDateOfBirth());
-                userEntity.setProfileImage(profile.getProfileImage());
+                userEntity.setProfileImage(String.join(",", uploadedUrls));
                 Freelancer freelancer = new Freelancer();
                 freelancer.setId(UUID.randomUUID());
                 freelancer.setBio(profile.getBio());
@@ -144,17 +147,20 @@ public class UserService {
 
     }
 
-    private void createClientProfile(Profile profile){
+    private void createClientProfile(Profile profile,MultipartFile file) throws IOException {
 
         Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
         UserEntity userEntity;
         if (optionalUserEntity.isPresent()) {
             userEntity = optionalUserEntity.get();
+            List<String> uploadedUrls=new ArrayList<>();
+            if(!file.isEmpty())
+                uploadService.uploadFile(file,uploadedUrls);
 
             userEntity.setCity(profile.getCity());
             userEntity.setGender(profile.getGender());
             userEntity.setDateOfBirth(profile.getDateOfBirth());
-            userEntity.setProfileImage(profile.getProfileImage());
+            userEntity.setProfileImage(String.join(",", uploadedUrls));
 
 
             Client client = new Client();
@@ -287,8 +293,6 @@ public class UserService {
                 BlobInfo.newBuilder(bucketName, blobName).build(),
                 file.getBytes()
         );
-//        Map<String, String> extensionHeaders = new HashMap<>();
-//        extensionHeaders.put("Content-Type", "application/octet-stream");
 
         URL url =
                 storage.signUrl(

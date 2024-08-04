@@ -7,19 +7,27 @@ import com.creativepool.entity.Ticket;
 import com.creativepool.entity.TicketStatus;
 import com.creativepool.entity.UserType;
 import com.creativepool.exception.BadRequestException;
+import com.creativepool.exception.ResourceNotFoundException;
 import com.creativepool.models.*;
 import com.creativepool.repository.FreelancerRepository;
 import com.creativepool.repository.FreelancerTicketApplicantsRepository;
 import com.creativepool.repository.TicketRepository;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.HttpMethod;
+import com.google.cloud.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +42,11 @@ public class TicketService {
     @Autowired
     FreelancerTicketApplicantsRepository freelancerTicketApplicantsRepository;
 
-    public TicketResponseDTO createTicket(TicketDTO ticketDTO) {
+    @Autowired
+    UploadService uploadService;
+
+    public TicketResponseDTO createTicket(TicketDTO ticketDTO, List<MultipartFile> multipartFiles) throws IOException {
+        List<String> uploadedUrls=new ArrayList<>();
         Ticket ticket = new Ticket();
         // Map DTO fields to entity
         ticket.setTitle(ticketDTO.getTitle());
@@ -42,13 +54,17 @@ public class TicketService {
         ticket.setReporterName(ticketDTO.getReporterName());
         ticket.setPrice(ticketDTO.getPrice());
         ticket.setTicketDeadline(ticketDTO.getTicketDeadline());
-        ticket.setImages(String.join(",", ticketDTO.getImages())); // Convert List to comma-separated String
         ticket.setUrl(ticketDTO.getUrl());
         ticket.setCreatedDate(new Date());
         ticket.setClientId(ticketDTO.getClientId());
         ticket.setTicketStatus(TicketStatus.OPEN); // or any default status
         ticket.setTicketComplexity(ticketDTO.getTicketComplexity());
-
+        if(multipartFiles!=null && !multipartFiles.isEmpty()) {
+            for (MultipartFile file : multipartFiles) {
+                uploadService.uploadFile(file, uploadedUrls);
+            }
+        }
+        ticket.setImages(String.join(",", uploadedUrls));
         Ticket savedTicket = ticketRepository.save(ticket);
 
         return mapToResponseDTO(savedTicket);
@@ -73,6 +89,7 @@ public class TicketService {
         responseDTO.setTicketStatus(ticket.getTicketStatus());
         responseDTO.setFreelancerId(ticket.getFreelancerId());
         responseDTO.setClientId(ticket.getClientId());
+        responseDTO.setImages(ticket.getImages());
         return responseDTO;
     }
 
@@ -225,4 +242,63 @@ public class TicketService {
         }
         return responses;
     }
+
+//    public TicketResponseDTO editTicket(TicketDTO ticketDTO,List<MultipartFile> files) {
+//        Optional<Ticket> existingTicketOptional = ticketRepository.findById(ticketDTO.getTicketId());
+//
+//        if (!existingTicketOptional.isPresent()) {
+//            throw new ResourceNotFoundException("Ticket not found with id " + id);
+//        }
+//
+//        Ticket existingTicket = existingTicketOptional.get();
+//
+//        // Map DTO fields to entity
+//        existingTicket.setTitle(ticketDTO.getTitle());
+//        existingTicket.setDescription(ticketDTO.getDescription());
+//        existingTicket.setReporterName(ticketDTO.getReporterName());
+//        existingTicket.setPrice(ticketDTO.getPrice());
+//        existingTicket.setTicketDeadline(ticketDTO.getTicketDeadline());
+//        existingTicket.setUrl(ticketDTO.getUrl());
+//        existingTicket.setTicketComplexity(ticketDTO.getTicketComplexity());
+//        existingTicket.setClientId(ticketDTO.getClientId());
+//
+//        Ticket updatedTicket = ticketRepository.save(existingTicket);
+//
+//        return mapToResponseDTO(updatedTicket);
+//    }
+
+//    public TicketResponseDTO updateTicketImages(Long id, List<MultipartFile> multipartFiles, List<String> deleteImages) throws IOException {
+//        Optional<Ticket> existingTicketOptional = ticketRepository.findById(id);
+//
+//        if (!existingTicketOptional.isPresent()) {
+//            throw new ResourceNotFoundException("Ticket not found with id " + id);
+//        }
+//
+//        Ticket existingTicket = existingTicketOptional.get();
+//
+//        List<String> currentImages = new ArrayList<>(Arrays.asList(existingTicket.getImages().split(",")));
+//
+//        // Remove images marked for deletion
+//        if (deleteImages != null) {
+//            currentImages.removeAll(deleteImages);
+//        }
+//
+//        // Upload new images
+//        if (multipartFiles != null && !multipartFiles.isEmpty()) {
+//            List<String> uploadedUrls = new ArrayList<>();
+//            for (MultipartFile file : multipartFiles) {
+//                uploadService.uploadFile(file, uploadedUrls);
+//            }
+//            currentImages.addAll(uploadedUrls);
+//        }
+//
+//        existingTicket.setImages(String.join(",", currentImages));
+//
+//        Ticket updatedTicket = ticketRepository.save(existingTicket);
+//
+//        return mapToResponseDTO(updatedTicket);
+//    }
+
+
+
 }
