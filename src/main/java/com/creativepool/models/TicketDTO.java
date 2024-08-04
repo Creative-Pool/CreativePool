@@ -1,5 +1,6 @@
 package com.creativepool.models;
 
+import com.creativepool.entity.TicketStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ public class TicketDTO {
     private String url;
     private UUID clientId;
     private String ticketComplexity;
-    private List<String> deleteImagesUrl;
+    private List<String> deleteUrls;
+    private TicketStatus ticketStatus;
 
 }

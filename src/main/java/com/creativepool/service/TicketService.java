@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -29,6 +30,8 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.creativepool.utils.Utils.getOrDefault;
 
 @Service
 public class TicketService {
@@ -243,62 +246,43 @@ public class TicketService {
         return responses;
     }
 
-//    public TicketResponseDTO editTicket(TicketDTO ticketDTO,List<MultipartFile> files) {
-//        Optional<Ticket> existingTicketOptional = ticketRepository.findById(ticketDTO.getTicketId());
-//
-//        if (!existingTicketOptional.isPresent()) {
-//            throw new ResourceNotFoundException("Ticket not found with id " + id);
-//        }
-//
-//        Ticket existingTicket = existingTicketOptional.get();
-//
-//        // Map DTO fields to entity
-//        existingTicket.setTitle(ticketDTO.getTitle());
-//        existingTicket.setDescription(ticketDTO.getDescription());
-//        existingTicket.setReporterName(ticketDTO.getReporterName());
-//        existingTicket.setPrice(ticketDTO.getPrice());
-//        existingTicket.setTicketDeadline(ticketDTO.getTicketDeadline());
-//        existingTicket.setUrl(ticketDTO.getUrl());
-//        existingTicket.setTicketComplexity(ticketDTO.getTicketComplexity());
-//        existingTicket.setClientId(ticketDTO.getClientId());
-//
-//        Ticket updatedTicket = ticketRepository.save(existingTicket);
-//
-//        return mapToResponseDTO(updatedTicket);
-//    }
+    public TicketResponseDTO editTicket(TicketDTO ticketDTO,List<MultipartFile> files) throws IOException {
+        Ticket ticket = ticketRepository.findById(ticketDTO.getTicketId())
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id " + ticketDTO.getTicketId()));
 
-//    public TicketResponseDTO updateTicketImages(Long id, List<MultipartFile> multipartFiles, List<String> deleteImages) throws IOException {
-//        Optional<Ticket> existingTicketOptional = ticketRepository.findById(id);
-//
-//        if (!existingTicketOptional.isPresent()) {
-//            throw new ResourceNotFoundException("Ticket not found with id " + id);
-//        }
-//
-//        Ticket existingTicket = existingTicketOptional.get();
-//
-//        List<String> currentImages = new ArrayList<>(Arrays.asList(existingTicket.getImages().split(",")));
-//
-//        // Remove images marked for deletion
-//        if (deleteImages != null) {
-//            currentImages.removeAll(deleteImages);
-//        }
-//
-//        // Upload new images
-//        if (multipartFiles != null && !multipartFiles.isEmpty()) {
-//            List<String> uploadedUrls = new ArrayList<>();
-//            for (MultipartFile file : multipartFiles) {
-//                uploadService.uploadFile(file, uploadedUrls);
-//            }
-//            currentImages.addAll(uploadedUrls);
-//        }
-//
-//        existingTicket.setImages(String.join(",", currentImages));
-//
-//        Ticket updatedTicket = ticketRepository.save(existingTicket);
-//
-//        return mapToResponseDTO(updatedTicket);
-//    }
+        // Get current images
+        List<String> currentImages = new ArrayList<>(Arrays.asList(ticket.getImages().split(",")));
 
+        // Delete specified images
+        if (ticketDTO.getDeleteUrls() != null && !ticketDTO.getDeleteUrls().isEmpty()) {
+            for (String url : ticketDTO.getDeleteUrls()) {
+                uploadService.deleteFileUsingSignedUrl(url);
+                currentImages.remove(url);
+            }
+        }
 
+        // Add new images
+        if (files != null && !files.isEmpty()) {
+            List<String> newUploadedUrls = new ArrayList<>();
+            for (MultipartFile file : files) {
+                uploadService.uploadFile(file, newUploadedUrls);
+            }
+            currentImages.addAll(newUploadedUrls);
+        }
 
+        // Update ticket details
+        ticket.setTitle(getOrDefault(ticketDTO.getTitle(), ticket.getTitle()));
+        ticket.setDescription(getOrDefault(ticketDTO.getDescription(), ticket.getDescription()));
+        ticket.setReporterName(getOrDefault(ticketDTO.getReporterName(), ticket.getReporterName()));
+        ticket.setPrice(getOrDefault(ticketDTO.getPrice(), ticket.getPrice()));
+        ticket.setTicketDeadline(getOrDefault(ticketDTO.getTicketDeadline(), ticket.getTicketDeadline()));
+        ticket.setUrl(getOrDefault(ticketDTO.getUrl(), ticket.getUrl()));
+        ticket.setClientId(getOrDefault(ticketDTO.getClientId(), ticket.getClientId()));
+        ticket.setTicketStatus(getOrDefault(ticketDTO.getTicketStatus(), ticket.getTicketStatus()));
+        ticket.setTicketComplexity(getOrDefault(ticketDTO.getTicketComplexity(), ticket.getTicketComplexity()));
+        ticket.setImages(currentImages.stream().collect(Collectors.joining(",")));
+
+        Ticket updatedTicket = ticketRepository.save(ticket);
+        return mapToResponseDTO(updatedTicket);
+    }
 }

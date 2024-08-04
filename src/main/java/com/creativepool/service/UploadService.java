@@ -13,6 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +56,8 @@ public class UploadService {
                         Storage.SignUrlOption.httpMethod(HttpMethod.GET),
                         Storage.SignUrlOption.withV4Signature());
         ;
+        String filename= url.getFile();
+        System.out.println("Hello"+ filename);
         uploadedUrls.add(url.toString());
     }
 
@@ -76,21 +80,16 @@ public class UploadService {
     }
 
     public  String[] parseSignedUrl(String signedUrl) throws MalformedURLException {
-        URL url = new URL(signedUrl);
-        String path = url.getPath();
 
-        // Extract bucket name and file name from path
-        // Path format: /<bucket-name>/<file-name>
-        Pattern pattern = Pattern.compile("^/([^/]+)/(.+)$");
-        Matcher matcher = pattern.matcher(path);
+        String[] parts = signedUrl.split("/");
+        String bucketName = parts[3];
+        String encodedFileName = parts[4].split("\\?")[0];
 
-        if (matcher.matches()) {
-            String bucketName = matcher.group(1);
-            String fileName = matcher.group(2);
-            return new String[]{bucketName, fileName};
-        } else {
-            throw new IllegalArgumentException("Invalid signed URL format");
-        }
+        // Decode the file name
+        String decodedFileName = URLDecoder.decode(encodedFileName, StandardCharsets.UTF_8);
+
+        return new String[]{bucketName, decodedFileName};
+
     }
 
 }

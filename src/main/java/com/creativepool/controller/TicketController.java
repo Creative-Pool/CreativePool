@@ -28,9 +28,9 @@ public class TicketController {
         return new ResponseEntity<>(createdTicket, HttpStatus.CREATED);
     }
 
-    @PutMapping("/edit-ticket/{id}")
+    @PutMapping("/edit-ticket")
     public ResponseEntity<TicketResponseDTO> editTicket(@RequestPart("ticketDTO") TicketDTO ticketDTO,
-                                                        @RequestPart(value = "files",required = false) List<MultipartFile> files) {
+                                                        @RequestPart(value = "files",required = false) List<MultipartFile> files) throws IOException {
         TicketResponseDTO updatedTicket = ticketService.editTicket(ticketDTO, files);
         return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
     }
