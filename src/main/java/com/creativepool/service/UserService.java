@@ -69,7 +69,8 @@ public class UserService {
     }
 
 
-    public void createUser(User user) {
+    public List<UserEntity> createUser(User user) {
+        List<UserEntity> users = new ArrayList<>();
         try {
             if (ObjectUtils.isEmpty(user))
                 throw new BadRequestException(Errors.E00001.getMessage());
@@ -90,13 +91,15 @@ public class UserService {
             userEntity.setLastName(user.getLastName());
             userEntity.setGender(Gender.MALE);
             userEntity.setPhone(user.getPhone());
-            userRepository.save(userEntity);
+            UserEntity userEntity1 = userRepository.save(userEntity);
+            users.add(userEntity1);
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage().contains("account_email_key"))
                 throw new DataIntegrityViolationException(Errors.E00006.getMessage());
             if (e.getMessage().contains("account_phone_key"))
                 throw new DataIntegrityViolationException(Errors.E00007.getMessage());
         }
+        return users;
     }
 
     public void createProfile(Profile profile, MultipartFile file) {
@@ -228,8 +231,8 @@ public class UserService {
                 }
 
                 profile.setWorkHistory(workHistoryList);
-                profiles.add(profile);
             }
+            profiles.add(profile);
         }
         return profiles;
     }

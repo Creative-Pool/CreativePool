@@ -16,7 +16,7 @@ public class UserEntity {
     @Column(name = "user_id")
     private UUID userID;
 
-    @Column(name = "username", unique = true, nullable = false)
+    @Column(name = "username")
     private String username;
 
     @Column(name = "firstname")
