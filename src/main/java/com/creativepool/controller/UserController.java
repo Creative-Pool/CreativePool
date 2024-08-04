@@ -13,10 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
+import java.util.List;
 
 @RestController
 @RequestMapping("/creative-pool/")
+@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
@@ -30,22 +31,21 @@ public class UserController {
 
     @PostMapping("/create-profile")
     public ResponseEntity<Void> createProfile(@RequestPart("profile") Profile profile, @RequestPart(value = "file", required = false) MultipartFile file) {
-        userService.createProfile(profile,file);
+        userService.createProfile(profile, file);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<Profile> getProfile(@RequestParam(name = "phoneNo") String phoneNo,@RequestParam(name = "userType") UserType userType) {
-        Profile profile=userService.getProfile(phoneNo,userType);
-        return new ResponseEntity<>(profile,HttpStatus.OK);
+    public ResponseEntity<List<Profile>> getProfile(@RequestParam(name = "phoneNo") String phoneNo, @RequestParam(name = "userType") UserType userType) {
+        List<Profile> profiles = userService.getProfile(phoneNo, userType);
+        return new ResponseEntity<>(profiles, HttpStatus.OK);
     }
 
     @PostMapping("/user/search")
     public ResponseEntity<PaginatedResponse<Profile>> searchUser(@RequestBody UserSearchRequest userSearchRequest) {
-        return new ResponseEntity<>(userService.searchUser(userSearchRequest),HttpStatus.OK);
+        return new ResponseEntity<>(userService.searchUser(userSearchRequest), HttpStatus.OK);
 
     }
-
 
 
 }

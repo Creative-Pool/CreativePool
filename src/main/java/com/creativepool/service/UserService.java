@@ -14,22 +14,18 @@ import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.ParameterMode;
-import jakarta.persistence.StoredProcedureQuery;
 import org.apache.commons.lang3.ObjectUtils;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -64,14 +60,13 @@ public class UserService {
 
     private final Storage storage;
 
-    public UserService() throws IOException {
+    public UserService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
+        Resource resource = new ClassPathResource(credentialFile);
         Credentials credentials = GoogleCredentials
-                .fromStream(new FileInputStream("C:\\Users\\DELL\\Downloads\\Useful-approach-425016-a9-e39523dcc150.json"));
+                .fromStream(resource.getInputStream());
         storage = StorageOptions.newBuilder().setCredentials(credentials)
-                .setProjectId("useful-approach-425016-a9").build().getService();
+                .setProjectId(projectId).build().getService();
     }
-
-
 
 
     public void createUser(User user) {
@@ -104,14 +99,14 @@ public class UserService {
         }
     }
 
-    public void createProfile(Profile profile,MultipartFile file) {
+    public void createProfile(Profile profile, MultipartFile file) {
         try {
             switch (profile.getUserType().toString()) {
                 case "FREELANCER":
-                    createFreelancerProfile(profile,file);
+                    createFreelancerProfile(profile, file);
                     break;
                 case "CLIENT":
-                    createClientProfile(profile,file);
+                    createClientProfile(profile, file);
                     break;
             }
         } catch (DataIntegrityViolationException | IOException e) {
@@ -119,43 +114,43 @@ public class UserService {
         }
     }
 
-    private void createFreelancerProfile(Profile profile,MultipartFile file) throws IOException {
+    private void createFreelancerProfile(Profile profile, MultipartFile file) throws IOException {
 
-            Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
-            UserEntity userEntity;
-            if (optionalUserEntity.isPresent()) {
-                List<String> uploadedUrls=new ArrayList<>();
-                if(!file.isEmpty())
-                    uploadService.uploadFile(file,uploadedUrls);
+        Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
+        UserEntity userEntity;
+        if (optionalUserEntity.isPresent()) {
+            List<String> uploadedUrls = new ArrayList<>();
+            if (!file.isEmpty())
+                uploadService.uploadFile(file, uploadedUrls);
 
-                userEntity = optionalUserEntity.get();
-                userEntity.setCity(profile.getCity());
-                userEntity.setGender(profile.getGender());
-                userEntity.setDateOfBirth(profile.getDateOfBirth());
-                userEntity.setProfileImage(String.join(",", uploadedUrls));
-                Freelancer freelancer = new Freelancer();
-                freelancer.setId(UUID.randomUUID());
-                freelancer.setBio(profile.getBio());
-                freelancer.setRating(profile.getRating());
-                freelancer.setEducationalQualification(profile.getEducationalQualification());
-                freelancer.setUserID(profile.getUserID());
-                freelancer.setTotalAssignedTickets(0);
+            userEntity = optionalUserEntity.get();
+            userEntity.setCity(profile.getCity());
+            userEntity.setGender(profile.getGender());
+            userEntity.setDateOfBirth(profile.getDateOfBirth());
+            userEntity.setProfileImage(String.join(",", uploadedUrls));
+            Freelancer freelancer = new Freelancer();
+            freelancer.setId(UUID.randomUUID());
+            freelancer.setBio(profile.getBio());
+            freelancer.setRating(profile.getRating());
+            freelancer.setEducationalQualification(profile.getEducationalQualification());
+            freelancer.setUserID(profile.getUserID());
+            freelancer.setTotalAssignedTickets(0);
 
-                userRepository.save(userEntity);
-                freelancerRepository.save(freelancer);
-            }
+            userRepository.save(userEntity);
+            freelancerRepository.save(freelancer);
+        }
 
     }
 
-    private void createClientProfile(Profile profile,MultipartFile file) throws IOException {
+    private void createClientProfile(Profile profile, MultipartFile file) throws IOException {
 
         Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
         UserEntity userEntity;
         if (optionalUserEntity.isPresent()) {
             userEntity = optionalUserEntity.get();
-            List<String> uploadedUrls=new ArrayList<>();
-            if(!file.isEmpty())
-                uploadService.uploadFile(file,uploadedUrls);
+            List<String> uploadedUrls = new ArrayList<>();
+            if (!file.isEmpty())
+                uploadService.uploadFile(file, uploadedUrls);
 
             userEntity.setCity(profile.getCity());
             userEntity.setGender(profile.getGender());
@@ -173,75 +168,77 @@ public class UserService {
         }
     }
 
-    public Profile getProfile(String phoneNo, UserType userType) {
+    public List<Profile> getProfile(String phoneNo, UserType userType) {
 
         return switch (userType.toString()) {
-            case "FREELANCER" -> getFreelancerProfile(phoneNo,userType);
-            case "CLIENT" -> getClientProfile(phoneNo,userType);
-            default -> new Profile();
+            case "FREELANCER" -> getFreelancerProfile(phoneNo, userType);
+            case "CLIENT" -> getClientProfile(phoneNo, userType);
+            default -> new ArrayList<>();
         };
     }
 
 
-    private Profile getFreelancerProfile(String phoneNo,UserType userType) {
-        Profile profile = new Profile();
-        List<WorkHistory> workHistoryList=new ArrayList<>();
-        List<Object[]> freelancerObjectArray = freelancerRepository.findFreelancerByPhoneNo(phoneNo,userType.ordinal());
-        if(freelancerObjectArray!=null && !freelancerObjectArray.isEmpty()){
-        Object[] row =freelancerObjectArray.get(0);
-        profile.setUserID(row[0] != null ? (UUID) row[0] : null);
-        profile.setFirstName(row[1] != null ? (String) row[1] : null);
-        profile.setLastName(row[2] != null ? (String) row[2] : null);
-        profile.setCity(row[3] != null ? (String) row[3] : null);
-        profile.setEmail(row[4] != null ? (String) row[4] : null);
-        profile.setDateOfBirth(row[5] != null ? (Date) row[5] : null);
+    private List<Profile> getFreelancerProfile(String phoneNo, UserType userType) {
+        List<Profile> profiles = new ArrayList<>();
+        List<WorkHistory> workHistoryList = new ArrayList<>();
+        List<Object[]> freelancerObjectArray = freelancerRepository.findFreelancerByPhoneNo(phoneNo, userType.ordinal());
+        if (freelancerObjectArray != null && !freelancerObjectArray.isEmpty()) {
+            Profile profile = new Profile();
+            Object[] row = freelancerObjectArray.get(0);
+            profile.setUserID(row[0] != null ? (UUID) row[0] : null);
+            profile.setFirstName(row[1] != null ? (String) row[1] : null);
+            profile.setLastName(row[2] != null ? (String) row[2] : null);
+            profile.setCity(row[3] != null ? (String) row[3] : null);
+            profile.setEmail(row[4] != null ? (String) row[4] : null);
+            profile.setDateOfBirth(row[5] != null ? (Date) row[5] : null);
 
-        if (row[6] != null) {
-            profile.setGender(Gender.values()[(Integer) row[6]]);
-        } else {
-            profile.setGender(null); // or set to a default value if needed
-        }
-
-        profile.setPhone(row[7] != null ? (String) row[7] : null);
-        profile.setUsername(row[8] != null ? (String) row[8] : null);
-        profile.setProfileImage(row[9] != null ? (String) row[9] : null);
-
-        if (row[10] != null) {
-            profile.setUserType(UserType.values()[(Integer) row[10]]);
-        } else {
-            profile.setUserType(null); // or set to a default value if needed
-        }
-
-        profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
-        profile.setBio(row[12] != null ? (String) row[12] : null);
-
-        if (row[13] != null) {
-            profile.setEducationalQualification(EducationalQualificationType.values()[(Integer) row[13]]);
-        } else {
-            profile.setEducationalQualification(null); // or set to a default value if needed
-        }
-
-        profile.setMinCharges(row[14] != null ? (BigDecimal) row[14] : null);
-
-        if(row[15] != null) {
-            List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15]);
-
-            for (Object[] object : workHistoryObjectArray) {
-                WorkHistory workHistory = new WorkHistory(object[0] != null ? (String) object[0] : null, object[1] != null ? (String) object[1] : null, object[2] != null ? ((BigDecimal) object[2]).doubleValue() : null);
-                workHistoryList.add(workHistory);
+            if (row[6] != null) {
+                profile.setGender(Gender.values()[(Integer) row[6]]);
+            } else {
+                profile.setGender(null); // or set to a default value if needed
             }
 
-            profile.setWorkHistory(workHistoryList);
+            profile.setPhone(row[7] != null ? (String) row[7] : null);
+            profile.setUsername(row[8] != null ? (String) row[8] : null);
+            profile.setProfileImage(row[9] != null ? (String) row[9] : null);
 
+            if (row[10] != null) {
+                profile.setUserType(UserType.values()[(Integer) row[10]]);
+            } else {
+                profile.setUserType(null); // or set to a default value if needed
+            }
+
+            profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
+            profile.setBio(row[12] != null ? (String) row[12] : null);
+
+            if (row[13] != null) {
+                profile.setEducationalQualification(EducationalQualificationType.values()[(Integer) row[13]]);
+            } else {
+                profile.setEducationalQualification(null); // or set to a default value if needed
+            }
+
+            profile.setMinCharges(row[14] != null ? (BigDecimal) row[14] : null);
+
+            if (row[15] != null) {
+                List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15]);
+
+                for (Object[] object : workHistoryObjectArray) {
+                    WorkHistory workHistory = new WorkHistory(object[0] != null ? (String) object[0] : null, object[1] != null ? (String) object[1] : null, object[2] != null ? ((BigDecimal) object[2]).doubleValue() : null);
+                    workHistoryList.add(workHistory);
+                }
+
+                profile.setWorkHistory(workHistoryList);
+                profiles.add(profile);
+            }
         }
-        }
-        return profile;
+        return profiles;
     }
 
-    private Profile getClientProfile(String phoneNo,UserType userType) {
-        Profile profile = new Profile();
+    private List<Profile> getClientProfile(String phoneNo, UserType userType) {
+        List<Profile> profiles = new ArrayList<>();
         List<Object[]> clientObjectArray = clientRepository.findClientByPhoneNo(phoneNo, userType.ordinal());
-        if(clientObjectArray!=null && !clientObjectArray.isEmpty()) {
+        if (clientObjectArray != null && !clientObjectArray.isEmpty()) {
+            Profile profile = new Profile();
             Object[] row = clientObjectArray.get(0);
             profile.setUserID(row[0] != null ? (UUID) row[0] : null);
             profile.setFirstName(row[1] != null ? (String) row[1] : null);
@@ -267,12 +264,13 @@ public class UserService {
             }
 
             profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
-
+            profiles.add(profile);
         }
-        return profile;
+
+        return profiles;
     }
 
-    private void mapUserEntityToProfile(Profile profile,UserEntity userEntity){
+    private void mapUserEntityToProfile(Profile profile, UserEntity userEntity) {
         profile.setFirstName(userEntity.getFirstName());
         profile.setLastName(userEntity.getLastName());
         profile.setCity(userEntity.getCity());
