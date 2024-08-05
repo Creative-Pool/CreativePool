@@ -3,19 +3,25 @@ package com.creativepool.controller;
 import com.creativepool.entity.UserType;
 import com.creativepool.models.*;
 import com.creativepool.service.TicketService;
+import jdk.jfr.ContentType;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/creative-pool/")
+@CrossOrigin(origins = "*")
+@Slf4j
 public class TicketController {
 
 
@@ -23,10 +29,19 @@ public class TicketController {
     private TicketService ticketService;
 
     @PostMapping("/create-ticket")
-    public ResponseEntity<TicketResponseDTO> createTicket( @RequestPart("ticketDTO") TicketDTO ticketDTO,
+    public ResponseEntity<List<TicketResponseDTO>> createTicket( @RequestPart("ticketDTO") TicketDTO ticketDTO,
                                                            @RequestPart(value = "files",required = false) List<MultipartFile> files) throws IOException {
-        TicketResponseDTO createdTicket = ticketService.createTicket(ticketDTO,files);
-        return new ResponseEntity<>(createdTicket, HttpStatus.CREATED);
+        log.info("TicketDTO {} files: {}", ticketDTO, files);
+        List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
+        try {
+            TicketResponseDTO createdTicket = ticketService.createTicket(ticketDTO, files);
+            ticketResponseDTOS.add(createdTicket);
+            return new ResponseEntity<>(ticketResponseDTOS, HttpStatus.CREATED);
+        }
+        catch (Exception ex){
+            log.error("Exception",ex);
+        }
+        return new ResponseEntity<>(ticketResponseDTOS, HttpStatus.CREATED);
     }
 
     @PutMapping("/edit-ticket")
