@@ -32,6 +32,8 @@ public class Profile {
     private UUID userID;
     private Double rating;
     private String bio;
+    private UUID clientId;
+    private UUID freelancerId;
     private UserType userType;
     private EducationalQualificationType educationalQualification;
     private BigDecimal minCharges;

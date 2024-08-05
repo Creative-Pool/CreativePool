@@ -236,7 +236,7 @@ public class UserService {
                 profile.setMinCharges(row[14] != null ? (BigDecimal) row[14] : null);
 
                 if (row[15] != null) {
-                    List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15]);
+                    List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15],TicketStatus.CLOSED.ordinal());
 
                     for (Object[] object : workHistoryObjectArray) {
                         WorkHistory workHistory = new WorkHistory(object[0] != null ? (String) object[0] : null, object[1] != null ? (String) object[1] : null, object[2] != null ? ((BigDecimal) object[2]).doubleValue() : null);
@@ -244,6 +244,7 @@ public class UserService {
                     }
 
                 profile.setWorkHistory(workHistoryList);
+                profile.setFreelancerId(row[15] != null ? (UUID) row[15] : null);
             }
             profiles.add(profile);
         }
@@ -292,26 +293,12 @@ public class UserService {
             }
 
             profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
+            profile.setClientId(row[12] != null ? (UUID) row[12] : null);
             profiles.add(profile);
         }
-
         return profiles;
     }
 
-//    private void mapUserEntityToProfile(Profile profile, UserEntity userEntity) {
-//        profile.setFirstName(userEntity.getFirstName());
-//        profile.setLastName(userEntity.getLastName());
-//        profile.setCity(userEntity.getCity());
-//        profile.setEmail(userEntity.getEmail());
-//        profile.setDateOfBirth(userEntity.getDateOfBirth());
-//        profile.setGender(userEntity.getGender());
-//        profile.setPhone(userEntity.getPhone());
-//        profile.setUsername(userEntity.getUsername());
-//        profile.setUserID(userEntity.getUserID());
-//        profile.setProfileImage(userEntity.getProfileImage());
-//        profile.setUserType(userEntity.getUserType());
-//        profile.setPhone(userEntity.getPhone());
-//    }
 
 
     public PaginatedResponse<Profile> searchUser(UserSearchRequest userSearchRequest) {

@@ -38,8 +38,8 @@ public interface FreelancerRepository extends JpaRepository<Freelancer, UUID> {
     @Query(value = "select ac.user_id,ac.firstname,ac.lastname,ac.city,ac.email,ac.date_of_birth,ac.gender,ac.phone,ac.username,ac.filename,ac.user_type,f.rating,f.bio,f.educational_qualification,f.min_charges,f.freelancer_id from account ac left join freelancer f on f.user_id=ac.user_id where ac.phone=:phoneNo and ac.user_Type=:userType",nativeQuery = true)
     public List<Object[]> findFreelancerByPhoneNo(String phoneNo,Integer userType);
 
-    @Query(value = "select t.title,t.complexity,ff.overall_rating from ticket t join freelancer_feedback ff on t.freelancer_id=ff.freelancer_id where t.freelancer_id=:freelancerId",nativeQuery = true)
-    public List<Object[]> getWorkHistory(UUID freelancerId);
+    @Query(value = "select t.title,t.complexity,ff.overall_rating from ticket t join freelancer_feedback ff on t.freelancer_id=ff.freelancer_id where t.freelancer_id=:freelancerId and t.ticket_status=:ticketStatus order by t.created_date desc",nativeQuery = true)
+    public List<Object[]> getWorkHistory(UUID freelancerId,Integer ticketStatus);
 
     public Optional<Freelancer> findByUserID(UUID userId);
 
