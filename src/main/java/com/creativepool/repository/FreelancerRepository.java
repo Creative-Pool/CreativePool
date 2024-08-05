@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -39,5 +40,7 @@ public interface FreelancerRepository extends JpaRepository<Freelancer, UUID> {
 
     @Query(value = "select t.title,t.complexity,ff.overall_rating from ticket t join freelancer_feedback ff on t.freelancer_id=ff.freelancer_id where t.freelancer_id=:freelancerId",nativeQuery = true)
     public List<Object[]> getWorkHistory(UUID freelancerId);
+
+    public Optional<Freelancer> findByUserID(UUID userId);
 
 }

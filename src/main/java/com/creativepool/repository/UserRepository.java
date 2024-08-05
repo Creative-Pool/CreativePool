@@ -1,5 +1,7 @@
 package com.creativepool.repository;
 
+import com.creativepool.entity.Client;
+import com.creativepool.entity.Freelancer;
 import com.creativepool.entity.UserEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
@@ -26,4 +29,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
             @Param("max_charges") BigDecimal max_charges,
             @Param("page") int page,
             @Param("size") int size);
+
+
+
+
 }

@@ -59,5 +59,11 @@ public class UserController {
 
     }
 
+    @PutMapping ("/edit-profile")
+    public ResponseEntity<Void> editProfile(@RequestPart("profile") Profile profile, @RequestPart(value = "file", required = false) MultipartFile file) {
+        userService.editProfile(profile, file);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
 
 }

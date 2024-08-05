@@ -3,6 +3,7 @@ package com.creativepool.service;
 import com.creativepool.constants.Errors;
 import com.creativepool.entity.*;
 import com.creativepool.exception.BadRequestException;
+import com.creativepool.exception.ResourceNotFoundException;
 import com.creativepool.models.*;
 import com.creativepool.repository.ClientRepository;
 import com.creativepool.repository.FreelancerRepository;
@@ -15,13 +16,13 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import jakarta.persistence.EntityManager;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
@@ -30,6 +31,8 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static com.creativepool.utils.Utils.getOrDefault;
 
 @Service
 public class UserService {
@@ -375,6 +378,96 @@ public class UserService {
 
         return profile;
     }
+
+    public void editProfile(Profile profile, MultipartFile file) {
+        try {
+            switch (profile.getUserType().toString()) {
+                case "FREELANCER":
+                    editFreelancerProfile(profile, file);
+                    break;
+                case "CLIENT":
+                    editClientProfile(profile, file);
+                    break;
+                default:
+                    throw new ResourceNotFoundException("User type not found");
+            }
+        } catch (IOException e) {
+            throw new DataIntegrityViolationException(Errors.E00006.getMessage(), e); // Assume E00006 is an edit-specific error message
+        }
+    }
+
+    private void editFreelancerProfile(Profile profile, MultipartFile file) throws IOException {
+        Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
+        if (optionalUserEntity.isPresent()) {
+            UserEntity userEntity = optionalUserEntity.get();
+            List<String> filenames = new ArrayList<>();
+            if (file != null && !file.isEmpty()) {
+                String oldProfilePicture=userEntity.getFilename();
+                cloudStorageService.uploadFile(file, filenames);
+                userEntity.setFilename(String.join(",", filenames));
+
+                if(!StringUtils.isEmpty(oldProfilePicture))
+                    cloudStorageService.deleteFile(bucketName,oldProfilePicture);
+            }
+
+
+
+            userEntity.setCity(getOrDefault(profile.getCity(), userEntity.getCity()));
+            userEntity.setGender(getOrDefault(profile.getGender(), userEntity.getGender()));
+            userEntity.setDateOfBirth(getOrDefault(profile.getDateOfBirth(), userEntity.getDateOfBirth()));
+
+            Optional<Freelancer> optionalFreelancer = freelancerRepository.findByUserID(profile.getUserID());
+            if (optionalFreelancer.isPresent()) {
+                Freelancer freelancer = optionalFreelancer.get();
+                freelancer.setBio(getOrDefault(profile.getBio(), freelancer.getBio()));
+                freelancer.setRating(getOrDefault(profile.getRating(), freelancer.getRating()));
+                freelancer.setEducationalQualification(getOrDefault(profile.getEducationalQualification(), freelancer.getEducationalQualification()));
+
+                userRepository.save(userEntity);
+                freelancerRepository.save(freelancer);
+            }  else {
+                throw new ResourceNotFoundException("Freelancer profile not found");
+            }
+        } else {
+            throw new ResourceNotFoundException("User not found");
+        }
+    }
+
+    private void editClientProfile(Profile profile, MultipartFile file) throws IOException {
+        Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
+        if (optionalUserEntity.isPresent()) {
+            UserEntity userEntity = optionalUserEntity.get();
+            List<String> filenames = new ArrayList<>();
+            if (file != null && !file.isEmpty()) {
+                String oldProfilePicture = userEntity.getFilename();
+                cloudStorageService.uploadFile(file, filenames);
+                userEntity.setFilename(String.join(",", filenames));
+
+                if (!StringUtils.isEmpty(oldProfilePicture)) {
+                    cloudStorageService.deleteFile(bucketName, oldProfilePicture);
+                }
+            }
+
+            userEntity.setCity(getOrDefault(profile.getCity(), userEntity.getCity()));
+            userEntity.setGender(getOrDefault(profile.getGender(), userEntity.getGender()));
+            userEntity.setDateOfBirth(getOrDefault(profile.getDateOfBirth(), userEntity.getDateOfBirth()));
+
+            Optional<Client> optionalClient = clientRepository.findByUserID(profile.getUserID());
+            if (optionalClient.isPresent()) {
+                Client client = optionalClient.get();
+                client.setRating(getOrDefault(profile.getRating(), client.getRating()));
+
+                userRepository.save(userEntity);
+                clientRepository.save(client);
+            } else {
+                throw new ResourceNotFoundException("Client profile not found");
+            }
+        } else {
+            throw new ResourceNotFoundException("User not found");
+        }
+    }
+
+
 
 }
 
