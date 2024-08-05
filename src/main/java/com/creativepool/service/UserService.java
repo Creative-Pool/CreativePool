@@ -21,6 +21,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
@@ -56,7 +57,7 @@ public class UserService {
     EntityManager entityManager;
 
     @Autowired
-    UploadService uploadService;
+    CloudStorageService cloudStorageService;
 
     private final Storage storage;
 
@@ -83,7 +84,6 @@ public class UserService {
             userEntity.setUsername(user.getUsername());
             userEntity.setUserType(user.getUserType());
             userEntity.setCreatedDate(new Date());
-            userEntity.setProfileImage(userEntity.getProfileImage());
             userEntity.setIsActive(true);
             userEntity.setIsDeleted(false);
             userEntity.setEmail(user.getEmail());
@@ -119,18 +119,18 @@ public class UserService {
 
     private void createFreelancerProfile(Profile profile, MultipartFile file) throws IOException {
 
-        Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
-        UserEntity userEntity;
-        if (optionalUserEntity.isPresent()) {
-            List<String> uploadedUrls = new ArrayList<>();
-            if (!file.isEmpty())
-                uploadService.uploadFile(file, uploadedUrls);
+            Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
+            UserEntity userEntity;
+            if (optionalUserEntity.isPresent()) {
+                List<String> filenames=new ArrayList<>();
+                if(!file.isEmpty())
+                    cloudStorageService.uploadFile(file,filenames);
 
             userEntity = optionalUserEntity.get();
             userEntity.setCity(profile.getCity());
             userEntity.setGender(profile.getGender());
             userEntity.setDateOfBirth(profile.getDateOfBirth());
-            userEntity.setProfileImage(String.join(",", uploadedUrls));
+            userEntity.setFilename(String.join(",", filenames));
             Freelancer freelancer = new Freelancer();
             freelancer.setId(UUID.randomUUID());
             freelancer.setBio(profile.getBio());
@@ -151,14 +151,14 @@ public class UserService {
         UserEntity userEntity;
         if (optionalUserEntity.isPresent()) {
             userEntity = optionalUserEntity.get();
-            List<String> uploadedUrls = new ArrayList<>();
-            if (!file.isEmpty())
-                uploadService.uploadFile(file, uploadedUrls);
+            List<String> filenames=new ArrayList<>();
+            if(!file.isEmpty())
+                cloudStorageService.uploadFile(file,filenames);
 
             userEntity.setCity(profile.getCity());
             userEntity.setGender(profile.getGender());
             userEntity.setDateOfBirth(profile.getDateOfBirth());
-            userEntity.setProfileImage(String.join(",", uploadedUrls));
+            userEntity.setFilename(String.join(",", filenames));
 
 
             Client client = new Client();
@@ -171,7 +171,7 @@ public class UserService {
         }
     }
 
-    public List<Profile> getProfile(String phoneNo, UserType userType) {
+    public List<Profile> getProfile(String phoneNo, UserType userType) throws IOException {
 
         return switch (userType.toString()) {
             case "FREELANCER" -> getFreelancerProfile(phoneNo, userType);
@@ -181,12 +181,13 @@ public class UserService {
     }
 
 
-    private List<Profile> getFreelancerProfile(String phoneNo, UserType userType) {
+    private List<Profile> getFreelancerProfile(String phoneNo, UserType userType) throws IOException {
         List<Profile> profiles = new ArrayList<>();
         List<WorkHistory> workHistoryList = new ArrayList<>();
         List<Object[]> freelancerObjectArray = freelancerRepository.findFreelancerByPhoneNo(phoneNo, userType.ordinal());
         if (freelancerObjectArray != null && !freelancerObjectArray.isEmpty()) {
             Profile profile = new Profile();
+            List<String> profileImagesUrl = new ArrayList<>();
             Object[] row = freelancerObjectArray.get(0);
             profile.setUserID(row[0] != null ? (UUID) row[0] : null);
             profile.setFirstName(row[1] != null ? (String) row[1] : null);
@@ -203,32 +204,41 @@ public class UserService {
 
             profile.setPhone(row[7] != null ? (String) row[7] : null);
             profile.setUsername(row[8] != null ? (String) row[8] : null);
-            profile.setProfileImage(row[9] != null ? (String) row[9] : null);
+            if (row[9] != null) {
 
-            if (row[10] != null) {
-                profile.setUserType(UserType.values()[(Integer) row[10]]);
-            } else {
-                profile.setUserType(null); // or set to a default value if needed
+                    String[] files = ((String) row[9]).split(",");
+                    for (String file : files) {
+                        profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
+                    }
+                    profile.setProfileImage(String.join(",",profileImagesUrl));
+
+
             }
 
-            profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
-            profile.setBio(row[12] != null ? (String) row[12] : null);
-
-            if (row[13] != null) {
-                profile.setEducationalQualification(EducationalQualificationType.values()[(Integer) row[13]]);
-            } else {
-                profile.setEducationalQualification(null); // or set to a default value if needed
-            }
-
-            profile.setMinCharges(row[14] != null ? (BigDecimal) row[14] : null);
-
-            if (row[15] != null) {
-                List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15]);
-
-                for (Object[] object : workHistoryObjectArray) {
-                    WorkHistory workHistory = new WorkHistory(object[0] != null ? (String) object[0] : null, object[1] != null ? (String) object[1] : null, object[2] != null ? ((BigDecimal) object[2]).doubleValue() : null);
-                    workHistoryList.add(workHistory);
+                if (row[10] != null) {
+                    profile.setUserType(UserType.values()[(Integer) row[10]]);
+                } else {
+                    profile.setUserType(null); // or set to a default value if needed
                 }
+
+                profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
+                profile.setBio(row[12] != null ? (String) row[12] : null);
+
+                if (row[13] != null) {
+                    profile.setEducationalQualification(EducationalQualificationType.values()[(Integer) row[13]]);
+                } else {
+                    profile.setEducationalQualification(null); // or set to a default value if needed
+                }
+
+                profile.setMinCharges(row[14] != null ? (BigDecimal) row[14] : null);
+
+                if (row[15] != null) {
+                    List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15]);
+
+                    for (Object[] object : workHistoryObjectArray) {
+                        WorkHistory workHistory = new WorkHistory(object[0] != null ? (String) object[0] : null, object[1] != null ? (String) object[1] : null, object[2] != null ? ((BigDecimal) object[2]).doubleValue() : null);
+                        workHistoryList.add(workHistory);
+                    }
 
                 profile.setWorkHistory(workHistoryList);
             }
@@ -237,11 +247,12 @@ public class UserService {
         return profiles;
     }
 
-    private List<Profile> getClientProfile(String phoneNo, UserType userType) {
+    private List<Profile> getClientProfile(String phoneNo, UserType userType) throws IOException {
         List<Profile> profiles = new ArrayList<>();
         List<Object[]> clientObjectArray = clientRepository.findClientByPhoneNo(phoneNo, userType.ordinal());
         if (clientObjectArray != null && !clientObjectArray.isEmpty()) {
             Profile profile = new Profile();
+            List<String> profileImagesUrl = new ArrayList<>();
             Object[] row = clientObjectArray.get(0);
             profile.setUserID(row[0] != null ? (UUID) row[0] : null);
             profile.setFirstName(row[1] != null ? (String) row[1] : null);
@@ -258,7 +269,18 @@ public class UserService {
 
             profile.setPhone(row[7] != null ? (String) row[7] : null);
             profile.setUsername(row[8] != null ? (String) row[8] : null);
-            profile.setProfileImage(row[9] != null ? (String) row[9] : null);
+
+            if (row[9] != null) {
+
+                    String[] files = ((String) row[9]).split(",");
+                    for (String file : files) {
+                        profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
+                    }
+                    profile.setProfileImage(String.join(",",profileImagesUrl));
+
+
+            }
+
 
             if (row[10] != null) {
                 profile.setUserType(UserType.values()[(Integer) row[10]]);
@@ -273,38 +295,20 @@ public class UserService {
         return profiles;
     }
 
-    private void mapUserEntityToProfile(Profile profile, UserEntity userEntity) {
-        profile.setFirstName(userEntity.getFirstName());
-        profile.setLastName(userEntity.getLastName());
-        profile.setCity(userEntity.getCity());
-        profile.setEmail(userEntity.getEmail());
-        profile.setDateOfBirth(userEntity.getDateOfBirth());
-        profile.setGender(userEntity.getGender());
-        profile.setPhone(userEntity.getPhone());
-        profile.setUsername(userEntity.getUsername());
-        profile.setUserID(userEntity.getUserID());
-        profile.setProfileImage(userEntity.getProfileImage());
-        profile.setUserType(userEntity.getUserType());
-        profile.setPhone(userEntity.getPhone());
-    }
-
-    private String uploadFile(MultipartFile file) throws IOException {
-        String blobName = file.getOriginalFilename();
-        BlobInfo blobInfo = storage.create(
-                BlobInfo.newBuilder(bucketName, blobName).build(),
-                file.getBytes()
-        );
-
-        URL url =
-                storage.signUrl(
-                        blobInfo,
-                        15,
-                        TimeUnit.MINUTES,
-                        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
-                        Storage.SignUrlOption.withV4Signature());
-        System.out.println("Generated PUT signed URL:" + url);
-        return url.toString();
-    }
+//    private void mapUserEntityToProfile(Profile profile, UserEntity userEntity) {
+//        profile.setFirstName(userEntity.getFirstName());
+//        profile.setLastName(userEntity.getLastName());
+//        profile.setCity(userEntity.getCity());
+//        profile.setEmail(userEntity.getEmail());
+//        profile.setDateOfBirth(userEntity.getDateOfBirth());
+//        profile.setGender(userEntity.getGender());
+//        profile.setPhone(userEntity.getPhone());
+//        profile.setUsername(userEntity.getUsername());
+//        profile.setUserID(userEntity.getUserID());
+//        profile.setProfileImage(userEntity.getProfileImage());
+//        profile.setUserType(userEntity.getUserType());
+//        profile.setPhone(userEntity.getPhone());
+//    }
 
 
     public PaginatedResponse<Profile> searchUser(UserSearchRequest userSearchRequest) {
@@ -361,6 +365,8 @@ public class UserService {
         profile.setPhone((String) row[3]);
         profile.setEmail((String) row[4]);
         profile.setProfileImage((String) row[5]);
+
+
         profile.setDateOfBirth((Date) row[6]);
         profile.setGender(Gender.values()[(Integer) row[7]]);
         profile.setCity((String) row[8]);

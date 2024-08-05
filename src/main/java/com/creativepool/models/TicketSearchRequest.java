@@ -3,6 +3,8 @@ package com.creativepool.models;
 import com.creativepool.entity.TicketStatus;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class TicketSearchRequest {
 
@@ -15,6 +17,8 @@ public class TicketSearchRequest {
     TicketStatus ticketStatus;
 
     String dates;
+
+    UUID clientId;
 
     Integer page;
 

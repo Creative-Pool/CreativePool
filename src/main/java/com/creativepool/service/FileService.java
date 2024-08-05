@@ -60,8 +60,7 @@ public class FileService {
                         TimeUnit.MINUTES,
                         Storage.SignUrlOption.httpMethod(HttpMethod.GET),
                         Storage.SignUrlOption.withV4Signature());
-        url.toString();
-        TicketResult ticketResult = new TicketResult();
+        TicketResult ticketResult=new TicketResult();
         ticketResult.setTicketId(ticketId);
         ticketResult.setVideoURL(url.toString());
         ticketResultRepository.saveAndFlush(ticketResult);

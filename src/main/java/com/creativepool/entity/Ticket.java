@@ -37,8 +37,8 @@ public class Ticket {
     @Column(name = "ticket_deadline")
     private Date ticketDeadline;
 
-    @Column(name = "images")
-    private String images;
+    @Column(name = "filename")
+    private String filename;
 
     @Column(name = "url")
     private String url;

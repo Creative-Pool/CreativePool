@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,13 +38,13 @@ public class TicketController {
 
 
     @GetMapping("/tickets")
-    public ResponseEntity<List<TicketResponseDTO>> getAllTickets() {
+    public ResponseEntity<List<TicketResponseDTO>> getAllTickets() throws MalformedURLException {
         List<TicketResponseDTO> tickets = ticketService.getAllTickets();
         return new ResponseEntity<>(tickets, HttpStatus.OK);
     }
 
     @PostMapping("/{ticketId}/assign")
-    public ResponseEntity<TicketResponseDTO> assignTicket(@PathVariable UUID ticketId, @RequestParam UUID userId) {
+    public ResponseEntity<TicketResponseDTO> assignTicket(@PathVariable UUID ticketId, @RequestParam UUID userId) throws IOException {
         TicketResponseDTO assignedTicket = ticketService.assignTicket(ticketId, userId);
         return ResponseEntity.ok(assignedTicket);
     }
@@ -61,7 +62,7 @@ public class TicketController {
     }
 
     @PostMapping("/ticket/search")
-    public ResponseEntity<PaginatedResponse<TicketSearchResponse>> searchUser(@RequestBody TicketSearchRequest ticketSearchRequest) {
+    public ResponseEntity<PaginatedResponse<TicketSearchResponse>> searchUser(@RequestBody TicketSearchRequest ticketSearchRequest) throws IOException {
         return new ResponseEntity<>(ticketService.searchUser(ticketSearchRequest),HttpStatus.OK);
 
     }

@@ -12,23 +12,18 @@ import com.creativepool.models.*;
 import com.creativepool.repository.FreelancerRepository;
 import com.creativepool.repository.FreelancerTicketApplicantsRepository;
 import com.creativepool.repository.TicketRepository;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.HttpMethod;
-import com.google.cloud.storage.Storage;
+import com.creativepool.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.creativepool.utils.Utils.getOrDefault;
@@ -46,10 +41,10 @@ public class TicketService {
     FreelancerTicketApplicantsRepository freelancerTicketApplicantsRepository;
 
     @Autowired
-    UploadService uploadService;
+    CloudStorageService cloudStorageService;
 
     public TicketResponseDTO createTicket(TicketDTO ticketDTO, List<MultipartFile> multipartFiles) throws IOException {
-        List<String> uploadedUrls=new ArrayList<>();
+        List<String> filenames=new ArrayList<>();
         Ticket ticket = new Ticket();
         // Map DTO fields to entity
         ticket.setTitle(ticketDTO.getTitle());
@@ -64,23 +59,36 @@ public class TicketService {
         ticket.setTicketComplexity(ticketDTO.getTicketComplexity());
         if(multipartFiles!=null && !multipartFiles.isEmpty()) {
             for (MultipartFile file : multipartFiles) {
-                uploadService.uploadFile(file, uploadedUrls);
+                cloudStorageService.uploadFile(file, filenames);
             }
         }
-        ticket.setImages(String.join(",", uploadedUrls));
+        ticket.setFilename(String.join(",", filenames));
         Ticket savedTicket = ticketRepository.save(ticket);
 
         return mapToResponseDTO(savedTicket);
     }
 
-    public List<TicketResponseDTO> getAllTickets() {
+
+
+    public List<TicketResponseDTO> getAllTickets()  {
         List<Ticket> tickets = ticketRepository.findAll();
-        return tickets.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+        return tickets.stream()
+                .map(ticket -> {
+                    try {
+                        return mapToResponseDTO(ticket);
+                    } catch (MalformedURLException e) {
+                        throw new RuntimeException(e);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
 
     }
 
-    private TicketResponseDTO mapToResponseDTO(Ticket ticket) {
+    private TicketResponseDTO mapToResponseDTO(Ticket ticket) throws IOException {
         TicketResponseDTO responseDTO = new TicketResponseDTO();
+        List<String> imagesUrl=new ArrayList<>();
         // Map entity fields to DTO
         responseDTO.setTicketID(ticket.getTicketID());
         responseDTO.setTitle(ticket.getTitle());
@@ -92,11 +100,18 @@ public class TicketService {
         responseDTO.setTicketStatus(ticket.getTicketStatus());
         responseDTO.setFreelancerId(ticket.getFreelancerId());
         responseDTO.setClientId(ticket.getClientId());
-        responseDTO.setImages(ticket.getImages());
+
+        if(!StringUtils.isEmpty(ticket.getFilename())) {
+            String[] files = ticket.getFilename().split(",");
+            for (String file : files) {
+                imagesUrl.add(cloudStorageService.generateSignedUrl(file));
+            }
+            responseDTO.setImages(String.join(",", imagesUrl));
+        }
         return responseDTO;
     }
 
-    public TicketResponseDTO assignTicket(UUID ticketId, UUID freelancerId) {
+    public TicketResponseDTO assignTicket(UUID ticketId, UUID freelancerId) throws IOException {
         Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new BadRequestException(String.format(Errors.E00004.getMessage(),ticketId)));
 
         Integer totalTicketsAssigned=freelancerRepository.getTotalTicketsAssigned(freelancerId);
@@ -137,7 +152,7 @@ public class TicketService {
     }
 
 
-    public PaginatedResponse<TicketSearchResponse> searchUser(TicketSearchRequest ticketSearchRequest) {
+    public PaginatedResponse<TicketSearchResponse> searchUser(TicketSearchRequest ticketSearchRequest) throws IOException {
 
 
 
@@ -166,21 +181,27 @@ public class TicketService {
                 ? ticketSearchRequest.getComplexity()
                 : null;
 
+        UUID clientId=(ticketSearchRequest.getClientId()!=null)?ticketSearchRequest.getClientId():null;
+
         Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
         Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
         Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
 
-        List<Object[]> result = ticketRepository.searchTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,page, size);
-        System.out.println(result.get(0).length);
-        List<TicketSearchResponse> responses=convertToResponse(result);
-        long totalRowCount = (long)result.get(0)[17];
-        boolean isLastPage = ((page + 1) * size >= totalRowCount);
-        Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
+        List<Object[]> result = ticketRepository.searchTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,clientId,page, size);
+
+        if(result!=null && !result.isEmpty()) {
+            List<TicketSearchResponse> responses = convertToResponse(result);
 
 
-        return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
+            long totalRowCount = (long) result.get(0)[17];
+            boolean isLastPage = ((page + 1) * size >= totalRowCount);
+            Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
 
 
+            return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
+
+        }
+        return null;
     }
 
     private BigDecimal[] parsePriceRange(String priceRange) {
@@ -220,28 +241,42 @@ public class TicketService {
         }
     }
 
-    private List<TicketSearchResponse> convertToResponse(List<Object[]> result) {
+    private List<TicketSearchResponse> convertToResponse(List<Object[]> result) throws IOException {
         List<TicketSearchResponse> responses = new ArrayList<>();
+
+        if(result!=null && !result.isEmpty()){
         for (Object[] row : result) {
+            List<String> imagesUrl = new ArrayList<>();
             TicketSearchResponse response = new TicketSearchResponse();
-            response.setTicketID((UUID) row[0]);
-            response.setTitle((String) row[1]);
-            response.setDescription((String) row[2]);
-            response.setReporterName((String) row[3]);
-            response.setCreatedDate((Date) row[4]);
-            response.setPrice(((BigDecimal) row[5]).doubleValue());
-            response.setTicketDeadline((Date) row[6]);
-            response.setImages((String) row[7]);
-            response.setUrl((String) row[8]);
-            response.setTicketStatus(TicketStatus.values()[(Integer) row[9]]);
-            response.setFreelancerId((UUID) row[10]);
-            response.setClientId((UUID) row[11]);
-            response.setUsername((String) row[12]);
-            response.setClientFirstName((String) row[13]);
-            response.setClientLastName((String) row[14]);
-            response.setRating(((BigDecimal) row[15]).doubleValue());
-            response.setComplexity((String) row[16]);
+            response.setTicketID((UUID) Utils.getOrDefault((UUID) row[0], response.getTicketID()));
+            response.setTitle((String) Utils.getOrDefault((String) row[1], response.getTitle()));
+            response.setDescription((String) Utils.getOrDefault((String) row[2], response.getDescription()));
+            response.setReporterName((String) Utils.getOrDefault((String) row[3], response.getReporterName()));
+            response.setCreatedDate((Date) Utils.getOrDefault((Date) row[4], response.getCreatedDate()));
+            response.setPrice((Double) Utils.getOrDefault(row[5] != null ? ((BigDecimal) row[5]).doubleValue() : null, response.getPrice()));
+            response.setTicketDeadline((Date) Utils.getOrDefault((Date) row[6], response.getTicketDeadline()));
+
+            if(((String)row[7])!=null)
+            {
+                String[] files=((String)row[7]).split(",");
+
+                for(String file:files) {
+                    imagesUrl.add(cloudStorageService.generateSignedUrl(file));
+                }
+                response.setImages(String.join(",", imagesUrl));
+            }
+            response.setUrl((String) Utils.getOrDefault((String) row[8], response.getUrl()));
+            response.setTicketStatus((TicketStatus) Utils.getOrDefault(row[9] != null ? TicketStatus.values()[(Integer) row[9]] : null, response.getTicketStatus()));
+            response.setFreelancerId((UUID) Utils.getOrDefault((UUID) row[10], response.getFreelancerId()));
+            response.setClientId((UUID) Utils.getOrDefault((UUID) row[11], response.getClientId()));
+            response.setUsername((String) Utils.getOrDefault((String) row[12], response.getUsername()));
+            response.setClientFirstName((String) Utils.getOrDefault((String) row[13], response.getClientFirstName()));
+            response.setClientLastName((String) Utils.getOrDefault((String) row[14], response.getClientLastName()));
+            response.setRating((Double) Utils.getOrDefault(row[15] != null ? ((BigDecimal) row[15]).doubleValue() : null, response.getRating()));
+            response.setComplexity((String) Utils.getOrDefault((String) row[16], response.getComplexity()));
+
             responses.add(response);
+        }
         }
         return responses;
     }
@@ -251,13 +286,14 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id " + ticketDTO.getTicketId()));
 
         // Get current images
-        List<String> currentImages = new ArrayList<>(Arrays.asList(ticket.getImages().split(",")));
+        List<String> currentImages = new ArrayList<>(Arrays.asList(ticket.getFilename().split(",")));
 
         // Delete specified images
         if (ticketDTO.getDeleteUrls() != null && !ticketDTO.getDeleteUrls().isEmpty()) {
             for (String url : ticketDTO.getDeleteUrls()) {
-                uploadService.deleteFileUsingSignedUrl(url);
-                currentImages.remove(url);
+                String filename=cloudStorageService.getFilenameFromSignedUrl(url);
+                cloudStorageService.deleteFileUsingSignedUrl(url);
+                currentImages.remove(filename);
             }
         }
 
@@ -265,7 +301,7 @@ public class TicketService {
         if (files != null && !files.isEmpty()) {
             List<String> newUploadedUrls = new ArrayList<>();
             for (MultipartFile file : files) {
-                uploadService.uploadFile(file, newUploadedUrls);
+                cloudStorageService.uploadFile(file, newUploadedUrls);
             }
             currentImages.addAll(newUploadedUrls);
         }
@@ -280,7 +316,7 @@ public class TicketService {
         ticket.setClientId(getOrDefault(ticketDTO.getClientId(), ticket.getClientId()));
         ticket.setTicketStatus(getOrDefault(ticketDTO.getTicketStatus(), ticket.getTicketStatus()));
         ticket.setTicketComplexity(getOrDefault(ticketDTO.getTicketComplexity(), ticket.getTicketComplexity()));
-        ticket.setImages(currentImages.stream().collect(Collectors.joining(",")));
+        ticket.setFilename(currentImages.stream().collect(Collectors.joining(",")));
 
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(updatedTicket);

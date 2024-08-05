@@ -34,7 +34,7 @@ public interface FreelancerRepository extends JpaRepository<Freelancer, UUID> {
     @Query("update FREELANCER f set f.rating=:rating where f.id=:freelancerId")
     public void updateRating(Double rating,UUID freelancerId);
 
-    @Query(value = "select ac.user_id,ac.firstname,ac.lastname,ac.city,ac.email,ac.date_of_birth,ac.gender,ac.phone,ac.username,ac.profile_image,ac.user_type,f.rating,f.bio,f.educational_qualification,f.min_charges,f.freelancer_id from account ac left join freelancer f on f.user_id=ac.user_id where ac.phone=:phoneNo and ac.user_Type=:userType",nativeQuery = true)
+    @Query(value = "select ac.user_id,ac.firstname,ac.lastname,ac.city,ac.email,ac.date_of_birth,ac.gender,ac.phone,ac.username,ac.filename,ac.user_type,f.rating,f.bio,f.educational_qualification,f.min_charges,f.freelancer_id from account ac left join freelancer f on f.user_id=ac.user_id where ac.phone=:phoneNo and ac.user_Type=:userType",nativeQuery = true)
     public List<Object[]> findFreelancerByPhoneNo(String phoneNo,Integer userType);
 
     @Query(value = "select t.title,t.complexity,ff.overall_rating from ticket t join freelancer_feedback ff on t.freelancer_id=ff.freelancer_id where t.freelancer_id=:freelancerId",nativeQuery = true)

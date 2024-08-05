@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -47,7 +48,7 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<List<Profile>> getProfile(@RequestParam(name = "phoneNo") String phoneNo, @RequestParam(name = "userType") UserType userType) {
+    public ResponseEntity<List<Profile>> getProfile(@RequestParam(name = "phoneNo") String phoneNo, @RequestParam(name = "userType") UserType userType) throws IOException {
         List<Profile> profiles = userService.getProfile(phoneNo, userType);
         return new ResponseEntity<>(profiles, HttpStatus.OK);
     }

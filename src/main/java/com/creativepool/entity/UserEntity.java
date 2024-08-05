@@ -37,8 +37,8 @@ public class UserEntity {
     @Column(name = "isdeleted")
     private Boolean isDeleted;
 
-    @Column(name = "profile_image")
-    private String profileImage;
+    @Column(name = "filename")
+    private String filename;
 
     @Column(name = "created_date")
     private Date createdDate;
