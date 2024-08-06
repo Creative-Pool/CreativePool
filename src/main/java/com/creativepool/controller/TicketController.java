@@ -78,8 +78,16 @@ public class TicketController {
 
     @PostMapping("/ticket/search")
     public ResponseEntity<PaginatedResponse<TicketSearchResponse>> searchUser(@RequestBody TicketSearchRequest ticketSearchRequest) throws IOException {
-        return new ResponseEntity<>(ticketService.searchUser(ticketSearchRequest),HttpStatus.OK);
-
+        log.info("T {}",ticketSearchRequest);
+        try {
+            PaginatedResponse<TicketSearchResponse> pp = ticketService.searchUser(ticketSearchRequest);
+            log.info("PP {}", pp);
+            return new ResponseEntity<>(pp, HttpStatus.OK);
+        }
+        catch (Exception ex){
+            log.error("ex", ex);
+        }
+        return new ResponseEntity<>(null, HttpStatus.OK);
     }
 
 

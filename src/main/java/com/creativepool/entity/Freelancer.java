@@ -14,7 +14,6 @@ import java.util.UUID;
 public class Freelancer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "freelancer_id", columnDefinition = "uuid")
     private UUID id;
 
