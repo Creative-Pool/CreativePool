@@ -73,8 +73,8 @@ public class UserService {
     }
 
 
-    public List<UserEntity> createUser(User user) {
-        List<UserEntity> users = new ArrayList<>();
+    public List<Profile> createUser(User user) {
+        List<Profile> profiles = new ArrayList<>();
         try {
             if (ObjectUtils.isEmpty(user))
                 throw new BadRequestException(Errors.E00001.getMessage());
@@ -82,6 +82,8 @@ public class UserService {
             if (!ObjectUtils.isEmpty(userEntity))
                 throw new BadRequestException(Errors.E00003.getMessage());
 
+            UUID clientId=null;
+            UUID freelancerId=null;
             userEntity = new UserEntity();
             userEntity.setUserID(UUID.randomUUID());
             userEntity.setUsername(user.getUsername());
@@ -95,14 +97,51 @@ public class UserService {
             userEntity.setGender(Gender.MALE);
             userEntity.setPhone(user.getPhone());
             UserEntity userEntity1 = userRepository.save(userEntity);
-            users.add(userEntity1);
+
+            if(user.getUserType().equals(UserType.CLIENT)){
+                Client client=new Client();
+                client.setClientID(UUID.randomUUID());
+                client.setUserID(userEntity.getUserID());
+                clientRepository.save(client);
+                clientId=client.getClientID();
+            }else{
+                Freelancer freelancer=new Freelancer();
+                freelancer.setId(UUID.randomUUID());
+                freelancer.setUserID(userEntity.getUserID());
+                freelancerRepository.save(freelancer);
+                freelancerId=freelancer.getId();
+            }
+            Profile profile=toProfile(userEntity,clientId,freelancerId);
+            profiles.add(profile);
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage().contains("account_email_key"))
                 throw new DataIntegrityViolationException(Errors.E00006.getMessage());
             if (e.getMessage().contains("account_phone_key"))
                 throw new DataIntegrityViolationException(Errors.E00007.getMessage());
         }
-        return users;
+        return profiles;
+    }
+
+    public  Profile toProfile(UserEntity userEntity,UUID clientId,UUID freelancerId) {
+        if (userEntity == null) {
+            return null;
+        }
+
+        Profile profile = new Profile();
+        profile.setUsername(userEntity.getUsername());
+        profile.setFirstName(userEntity.getFirstName());
+        profile.setLastName(userEntity.getLastName());
+        profile.setPhone(userEntity.getPhone());
+        profile.setEmail(userEntity.getEmail());
+        profile.setDateOfBirth(userEntity.getDateOfBirth());
+        profile.setGender(userEntity.getGender());
+        profile.setCity(userEntity.getCity());
+        profile.setUserID(userEntity.getUserID());
+        profile.setUserType(userEntity.getUserType());
+        profile.setClientId(clientId);
+        profile.setFreelancerId(freelancerId);
+
+        return profile;
     }
 
     public void createProfile(Profile profile, MultipartFile file) {

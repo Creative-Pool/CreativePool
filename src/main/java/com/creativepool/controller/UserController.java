@@ -29,10 +29,10 @@ public class UserController {
     UserService userService;
 
     @PostMapping("/create-user")
-    public ResponseEntity<List<UserEntity>> createUser(@RequestBody User user) {
+    public ResponseEntity<List<Profile>> createUser(@RequestBody User user) {
         log.info("user:{}",user);
         try {
-            List<UserEntity> users = userService.createUser(user);
+            List<Profile> users = userService.createUser(user);
             return new ResponseEntity<>(users, HttpStatus.CREATED);
         }
         catch (Exception ex){
