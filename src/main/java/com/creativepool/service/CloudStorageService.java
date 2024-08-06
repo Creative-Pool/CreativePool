@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +42,7 @@ public class CloudStorageService {
     public void uploadFile(MultipartFile file, List<String> filenames) throws IOException {
         String blobName = UUID.randomUUID().toString();
         BlobInfo blobInfo = storage.create(
-                BlobInfo.newBuilder(bucketName, blobName).build(),
+                BlobInfo.newBuilder(bucketName, blobName).setContentType(file.getContentType()).build(),
                 file.getBytes()
         );
         URL url =
