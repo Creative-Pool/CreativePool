@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,19 +30,33 @@ public class TicketController {
     private TicketService ticketService;
 
     @PostMapping("/create-ticket")
-    public ResponseEntity<List<TicketResponseDTO>> createTicket( @RequestPart("ticketDTO") TicketDTO ticketDTO,
-                                                           @RequestPart(value = "files",required = false) List<MultipartFile> files) throws IOException {
+    public ResponseEntity<List<TicketResponseDTO>> createTicket(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("clientId") String clientId,
+            @RequestParam("price") double price,
+            @RequestParam("ticketDeadline") Date ticketDeadline,
+            @RequestParam("ticketComplexity") String ticketComplexity,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+
+        TicketDTO ticketDTO = new TicketDTO();
+        ticketDTO.setTitle(title);
+        ticketDTO.setDescription(description);
+        ticketDTO.setClientId(UUID.fromString(clientId));
+        ticketDTO.setPrice(price);
+        ticketDTO.setTicketDeadline(ticketDeadline);
+        ticketDTO.setTicketComplexity(ticketComplexity);
+
         log.info("TicketDTO {} files: {}", ticketDTO, files);
         List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
         try {
             TicketResponseDTO createdTicket = ticketService.createTicket(ticketDTO, files);
             ticketResponseDTOS.add(createdTicket);
             return new ResponseEntity<>(ticketResponseDTOS, HttpStatus.CREATED);
+        } catch (Exception ex) {
+            log.error("Exception", ex);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        catch (Exception ex){
-            log.error("Exception",ex);
-        }
-        return new ResponseEntity<>(ticketResponseDTOS, HttpStatus.CREATED);
     }
 
     @PutMapping("/edit-ticket")
