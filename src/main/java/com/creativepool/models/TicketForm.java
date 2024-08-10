@@ -1,5 +1,6 @@
 package com.creativepool.models;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,21 +19,9 @@ public class TicketForm {
         ObjectMapper ob = new ObjectMapper();
         try {
             return ob.readValue(ticketDTO, TicketDTO.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
-        catch (Exception ex){
-        }
-        return null;
     }
 
-//    public void setTicketDTO(TicketDTO ticketDTO) {
-//        this.ticketDTO = ticketDTO;
-//    }
-
-    public List<MultipartFile> getFiles() {
-        return files;
-    }
-
-    public void setFiles(List<MultipartFile> files) {
-        this.files = files;
-    }
 }

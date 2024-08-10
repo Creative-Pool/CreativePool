@@ -35,12 +35,6 @@ public class TicketController {
 
         TicketDTO ticketDTO = ticketForm.getTicketDTO();
         List<MultipartFile> files = ticketForm.getFiles();
-//        ticketDTO.setTitle(title);
-//        ticketDTO.setDescription(description);
-//        ticketDTO.setClientId(UUID.fromString(clientId));
-//        ticketDTO.setPrice(price);
-//        ticketDTO.setTicketDeadline(ticketDeadline);
-//        ticketDTO.setTicketComplexity(ticketComplexity);
 
         log.info("TicketDTO {} files: {}", ticketDTO, files);
         List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
@@ -55,8 +49,9 @@ public class TicketController {
     }
 
     @PutMapping("/edit-ticket")
-    public ResponseEntity<TicketResponseDTO> editTicket(@RequestPart("ticketDTO") TicketDTO ticketDTO,
-                                                        @RequestPart(value = "files",required = false) List<MultipartFile> files) throws IOException {
+    public ResponseEntity<TicketResponseDTO> editTicket(@ModelAttribute TicketForm ticketForm) throws IOException {
+        TicketDTO ticketDTO = ticketForm.getTicketDTO();
+        List<MultipartFile> files = ticketForm.getFiles();
         TicketResponseDTO updatedTicket = ticketService.editTicket(ticketDTO, files);
         return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
     }
