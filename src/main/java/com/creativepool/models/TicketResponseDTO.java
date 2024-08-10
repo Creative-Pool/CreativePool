@@ -4,6 +4,7 @@ import com.creativepool.entity.TicketStatus;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -15,7 +16,7 @@ public class TicketResponseDTO {
     private Date createdDate;
     private Double price;
     private Date ticketDeadline;
-    private String images;
+    private List<String> urls;
     private String url;
     private TicketStatus ticketStatus;
     private UUID freelancerId;

@@ -88,7 +88,7 @@ public class TicketService {
 
     private TicketResponseDTO mapToResponseDTO(Ticket ticket) throws IOException {
         TicketResponseDTO responseDTO = new TicketResponseDTO();
-        List<String> imagesUrl=new ArrayList<>();
+        List<String> fileUrls=new ArrayList<>();
         // Map entity fields to DTO
         responseDTO.setTicketID(ticket.getTicketID());
         responseDTO.setTitle(ticket.getTitle());
@@ -104,9 +104,9 @@ public class TicketService {
         if(!StringUtils.isEmpty(ticket.getFilename())) {
             String[] files = ticket.getFilename().split(",");
             for (String file : files) {
-                imagesUrl.add(cloudStorageService.generateSignedUrl(file));
+                fileUrls.add(cloudStorageService.generateSignedUrl(file));
             }
-            responseDTO.setImages(String.join(",", imagesUrl));
+            responseDTO.setUrls(fileUrls);
         }
         return responseDTO;
     }

@@ -22,7 +22,7 @@ public class TicketResult {
     private UUID ticketId;
 
     @Column(name = "image_url")
-    private String imageURL;
+    private String filenames;
 
     @Column(name = "video_url")
     private String videoURL;

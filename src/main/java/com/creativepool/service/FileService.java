@@ -20,52 +20,33 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class FileService {
 
-    private final Storage storage;
-
-//    private final Path fileStorageLocation = Paths.get("file_storage").toAbsolutePath().normalize();
-
-
     @Value("${spring.cloud.gcp.storage.bucket}")
     private String bucketName;
-
 
     @Autowired
     TicketResultRepository ticketResultRepository;
 
-    public FileService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
-        Resource resource = new ClassPathResource(credentialFile);
-        Credentials credentials = GoogleCredentials
-                .fromStream(resource.getInputStream());
-        storage = StorageOptions.newBuilder().setCredentials(credentials)
-                .setProjectId(projectId).build().getService();
-    }
+    @Autowired
+    CloudStorageService cloudStorageService;
+
 
     public void uploadFile(MultipartFile file, UUID ticketId) throws IOException {
-        String blobName = file.getOriginalFilename();
-        BlobInfo blobInfo = storage.create(
-                BlobInfo.newBuilder(bucketName, blobName).build(),
-                file.getBytes()
-        );
-        URL url =
-                storage.signUrl(
-                        blobInfo,
-                        15,
-                        TimeUnit.MINUTES,
-                        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
-                        Storage.SignUrlOption.withV4Signature());
+        List<String> filenames=new ArrayList<>();
+        cloudStorageService.uploadFile(file,filenames);
         TicketResult ticketResult=new TicketResult();
         ticketResult.setTicketId(ticketId);
-        ticketResult.setVideoURL(url.toString());
+        ticketResult.setFilenames(filenames.stream().collect(Collectors.joining(",")));
         ticketResultRepository.saveAndFlush(ticketResult);
-
-
     }
 
     public Resource loadFileAsResource(UUID resultId) {
@@ -74,7 +55,7 @@ public class FileService {
             Optional<TicketResult> ticketResult = ticketResultRepository.findById(resultId);
 
             //  Path filePath = fileStorageLocation.resolve(fileName).normalize();
-            Resource resource = new UrlResource(ticketResult.get().getVideoURL());
+            Resource resource = new UrlResource(ticketResult.get().getFilenames());
             if (resource.exists()) {
                 return resource;
             } else {
