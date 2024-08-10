@@ -15,6 +15,7 @@ import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import jakarta.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.creativepool.utils.Utils.getOrDefault;
-
+@Slf4j
 @Service
 public class UserService {
 
@@ -423,6 +424,7 @@ public class UserService {
     }
 
     private void editFreelancerProfile(Profile profile, MultipartFile file) throws IOException {
+
         Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
         if (optionalUserEntity.isPresent()) {
             UserEntity userEntity = optionalUserEntity.get();
@@ -460,6 +462,7 @@ public class UserService {
     }
 
     private void editClientProfile(Profile profile, MultipartFile file) throws IOException {
+      log.info("Action to edit the client ");
         Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
         if (optionalUserEntity.isPresent()) {
             UserEntity userEntity = optionalUserEntity.get();
