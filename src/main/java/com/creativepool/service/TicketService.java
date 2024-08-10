@@ -194,14 +194,14 @@ public class TicketService {
 
 
             long totalRowCount = (long) result.get(0)[17];
-            boolean isLastPage = ((page + 1) * size >= totalRowCount);
+            boolean isLastPage = ((long) (page + 1) * size >= totalRowCount);
             Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
 
 
             return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
 
         }
-        return null;
+        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
 
     private BigDecimal[] parsePriceRange(String priceRange) {
