@@ -3,11 +3,10 @@ package com.creativepool.controller;
 
 import com.creativepool.entity.UserEntity;
 import com.creativepool.entity.UserType;
-import com.creativepool.models.PaginatedResponse;
-import com.creativepool.models.Profile;
-import com.creativepool.models.User;
-import com.creativepool.models.UserSearchRequest;
+import com.creativepool.exception.CreativePoolException;
+import com.creativepool.models.*;
 import com.creativepool.service.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -60,9 +59,16 @@ public class UserController {
     }
 
     @PutMapping ("/edit-profile")
-    public ResponseEntity<Void> editProfile(@RequestPart("profile") Profile profile, @RequestPart(value = "file", required = false) MultipartFile file) {
-        userService.editProfile(profile, file);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<Void> editProfile(@ModelAttribute ProfileForm profileForm) throws IOException {
+        try {
+            log.info("Action to edit profile started :{}", profileForm.getProfile());
+            Profile profile = profileForm.getProfile();
+            MultipartFile file = profileForm.getFile();
+            userService.editProfile(profile, file);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception ex) {
+            throw new CreativePoolException(ex.getMessage());
+        }
     }
 
 

@@ -31,21 +31,10 @@ public class TicketController {
 
     @PostMapping("/create-ticket")
     public ResponseEntity<List<TicketResponseDTO>> createTicket(
-            @RequestParam("title") String title,
-            @RequestParam("description") String description,
-            @RequestParam("clientId") String clientId,
-            @RequestParam("price") double price,
-            @RequestParam("ticketDeadline") Date ticketDeadline,
-            @RequestParam("ticketComplexity") String ticketComplexity,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+            @ModelAttribute TicketForm ticketForm) throws IOException {
 
-        TicketDTO ticketDTO = new TicketDTO();
-        ticketDTO.setTitle(title);
-        ticketDTO.setDescription(description);
-        ticketDTO.setClientId(UUID.fromString(clientId));
-        ticketDTO.setPrice(price);
-        ticketDTO.setTicketDeadline(ticketDeadline);
-        ticketDTO.setTicketComplexity(ticketComplexity);
+        TicketDTO ticketDTO = ticketForm.getTicketDTO();
+        List<MultipartFile> files = ticketForm.getFiles();
 
         log.info("TicketDTO {} files: {}", ticketDTO, files);
         List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
@@ -60,8 +49,9 @@ public class TicketController {
     }
 
     @PutMapping("/edit-ticket")
-    public ResponseEntity<TicketResponseDTO> editTicket(@RequestPart("ticketDTO") TicketDTO ticketDTO,
-                                                        @RequestPart(value = "files",required = false) List<MultipartFile> files) throws IOException {
+    public ResponseEntity<TicketResponseDTO> editTicket(@ModelAttribute TicketForm ticketForm) throws IOException {
+        TicketDTO ticketDTO = ticketForm.getTicketDTO();
+        List<MultipartFile> files = ticketForm.getFiles();
         TicketResponseDTO updatedTicket = ticketService.editTicket(ticketDTO, files);
         return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
     }
