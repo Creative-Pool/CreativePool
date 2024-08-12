@@ -35,4 +35,20 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
 
     @Query(value = "select count(*) from ticket where client_id= :clientId",nativeQuery = true)
     public BigInteger fetchTotalTicketsAssignedToClient(UUID clientId);
+
+    @Query(value = "SELECT * FROM public.search_freelancer_ticket_data(:complexity, :budgetMin, :budgetMax, :ticketStatus, :rating, :startDate, :endDate,:freelancerId,:page, :size)", nativeQuery = true)
+    List<Object[]> searchFreelancerTickets(
+            @Param("complexity") String complexity,
+            @Param("budgetMin") BigDecimal budgetMin,
+            @Param("budgetMax") BigDecimal budgetMax,
+            @Param("ticketStatus") Integer ticketStatus,
+            @Param("rating") BigDecimal rating,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("freelancerId") UUID freelancerId,
+            @Param("page") Integer page,
+            @Param("size") Integer size
+    );
+
+
 }

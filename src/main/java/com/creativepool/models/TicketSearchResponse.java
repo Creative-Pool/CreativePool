@@ -21,8 +21,8 @@ public class TicketSearchResponse {
     private UUID freelancerId;
     private UUID clientId;
     private String username;
-    private String clientFirstName;
-    private String clientLastName;
+    private String firstName;
+    private String lastName;
     private Double rating;
     private String complexity;
 

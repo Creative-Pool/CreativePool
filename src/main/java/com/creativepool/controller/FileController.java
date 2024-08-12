@@ -15,6 +15,7 @@ import com.creativepool.service.FileService;
 
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,14 +35,14 @@ public class FileController{
     private String projectId;
 
 
-    @PostMapping("/upload")
+    @PostMapping("/result-upload")
     public void uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("ticketId") UUID ticketId) {
-//        try {
-//        //    fileService.uploadFile(file,ticketId);
-//
-//        } catch (IOException e) {
-//            throw new CreativePoolException(Errors.E00009.getMessage());
-//        }
+        try {
+            fileService.uploadFile(file,ticketId);
+
+        } catch (IOException e) {
+            throw new CreativePoolException(Errors.E00009.getMessage());
+        }
     }
 
     @GetMapping("/download")
@@ -50,6 +51,24 @@ public class FileController{
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
+    }
+
+
+    @GetMapping("/download-zip")
+    public ResponseEntity<byte[]> downloadFilesAsZip(
+            @RequestParam("resultId") UUID resultId) {
+
+        try {
+            byte[] zipFile = fileService.downloadAndZipFiles(resultId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"files.zip\"");
+            headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
+
+            return new ResponseEntity<>(zipFile, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 

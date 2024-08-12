@@ -96,6 +96,14 @@ public class TicketController {
     }
 
 
+    @PostMapping("/freelancer-tickets")
+    public  ResponseEntity<PaginatedResponse<TicketSearchResponse>> getFreelancerTickets(@RequestBody TicketSearchRequest ticketSearchRequest) throws IOException {
+        PaginatedResponse<TicketSearchResponse> pp = ticketService.searchFreelancerTicket(ticketSearchRequest);
+        return new ResponseEntity<>(pp, HttpStatus.OK);
+    }
+
+
+
 
 
 }

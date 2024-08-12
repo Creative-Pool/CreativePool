@@ -20,6 +20,8 @@ public class TicketSearchRequest {
 
     UUID clientId;
 
+    UUID freelancerId;
+
     Integer page;
 
     Integer size;

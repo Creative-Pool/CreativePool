@@ -190,7 +190,7 @@ public class TicketService {
         List<Object[]> result = ticketRepository.searchTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,clientId,page, size);
 
         if(result!=null && !result.isEmpty()) {
-            List<TicketSearchResponse> responses = convertToResponse(result);
+            List<TicketSearchResponse> responses = convertToResponse(result,UserType.CLIENT);
 
 
             long totalRowCount = (long) result.get(0)[17];
@@ -241,7 +241,7 @@ public class TicketService {
         }
     }
 
-    private List<TicketSearchResponse> convertToResponse(List<Object[]> result) throws IOException {
+    private List<TicketSearchResponse> convertToResponse(List<Object[]> result,UserType userType) throws IOException {
         List<TicketSearchResponse> responses = new ArrayList<>();
 
         if(result!=null && !result.isEmpty()){
@@ -270,11 +270,11 @@ public class TicketService {
             response.setFreelancerId((UUID) Utils.getOrDefault((UUID) row[10], response.getFreelancerId()));
             response.setClientId((UUID) Utils.getOrDefault((UUID) row[11], response.getClientId()));
             response.setUsername((String) Utils.getOrDefault((String) row[12], response.getUsername()));
-            response.setClientFirstName((String) Utils.getOrDefault((String) row[13], response.getClientFirstName()));
-            response.setClientLastName((String) Utils.getOrDefault((String) row[14], response.getClientLastName()));
-            response.setRating((Double) Utils.getOrDefault(row[15] != null ? ((BigDecimal) row[15]).doubleValue() : null, response.getRating()));
-            response.setComplexity((String) Utils.getOrDefault((String) row[16], response.getComplexity()));
-
+            response.setFirstName((String) Utils.getOrDefault((String) row[13], response.getFirstName()));
+            response.setLastName((String) Utils.getOrDefault((String) row[14], response.getLastName()));
+            response.setComplexity((String) Utils.getOrDefault((String) row[15], response.getComplexity()));
+            if(userType.equals(UserType.CLIENT))
+                 response.setRating((Double) Utils.getOrDefault(row[16] != null ? ((BigDecimal) row[16]).doubleValue() : null, response.getRating()));
             responses.add(response);
         }
         }
@@ -321,4 +321,72 @@ public class TicketService {
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(updatedTicket);
     }
+
+    public List<TicketResponseDTO> getFreelancerTickets(UUID freelancerId)  {
+        List<Ticket> tickets = ticketRepository.findAll();
+        return tickets.stream()
+                .map(ticket -> {
+                    try {
+                        return mapToResponseDTO(ticket);
+                    } catch (MalformedURLException e) {
+                        throw new RuntimeException(e);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
+    }
+
+    public PaginatedResponse<TicketSearchResponse> searchFreelancerTicket(TicketSearchRequest ticketSearchRequest) throws IOException {
+
+        Integer page = ticketSearchRequest.getPage();
+        Integer size = ticketSearchRequest.getSize();
+
+        if (page == null || size == null) {
+            throw new BadRequestException(Errors.E00001.getMessage());
+        }
+
+        BigDecimal rating = (ticketSearchRequest.getRating() != null)
+                ? BigDecimal.valueOf(ticketSearchRequest.getRating())
+                : null;
+
+        Integer ticketStatus = (ticketSearchRequest.getTicketStatus() != null)
+                ? ticketSearchRequest.getTicketStatus().ordinal()
+                : null;
+
+        // Fetching and parsing price range
+        BigDecimal[] priceRange = parsePriceRange(ticketSearchRequest.getPriceRange());
+        BigDecimal minPrice = (priceRange[0] != null) ? priceRange[0] : null;
+        BigDecimal maxPrice = (priceRange[1] != null) ? priceRange[1] : null;
+
+        // Fetching other parameters
+        String complexity = (ticketSearchRequest.getComplexity() != null && !ticketSearchRequest.getComplexity().isEmpty())
+                ? ticketSearchRequest.getComplexity()
+                : null;
+
+        UUID freelancerId=(ticketSearchRequest.getFreelancerId()!=null)?ticketSearchRequest.getFreelancerId():null;
+
+        Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
+        Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
+        Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
+
+        List<Object[]> result = ticketRepository.searchFreelancerTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,freelancerId,page, size);
+
+        if(result!=null && !result.isEmpty()) {
+            List<TicketSearchResponse> responses = convertToResponse(result,UserType.FREELANCER);
+
+
+            long totalRowCount = (long) result.get(0)[16];
+            boolean isLastPage = ((page + 1) * size >= totalRowCount);
+            Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
+
+
+            return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
+
+        }
+        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
+    }
+
+
 }

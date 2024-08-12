@@ -12,7 +12,8 @@ public enum Errors {
     E00006("Email already exists."),
     E00007("Contact no already exists."),
     E00008("You have reached the maximum number of assigned tickets."),
-    E00009("Unable to upload the file.");;
+    E00009("Unable to upload the file."),
+    E00010("Request Id is not present.");
 
     private final String message;
     Errors(String message) {

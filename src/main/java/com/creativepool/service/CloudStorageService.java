@@ -96,4 +96,9 @@ public class CloudStorageService {
         return null;
     }
 
+    public Blob getBlob(String filename){
+        return storage.get(BlobId.of(bucketName, filename));
+
+    }
+
 }
