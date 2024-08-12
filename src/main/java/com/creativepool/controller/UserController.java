@@ -52,9 +52,9 @@ public class UserController {
         return new ResponseEntity<>(profiles, HttpStatus.OK);
     }
 
-    @PostMapping("/user/search")
-    public ResponseEntity<PaginatedResponse<Profile>> searchUser(@RequestBody UserSearchRequest userSearchRequest) {
-        return new ResponseEntity<>(userService.searchUser(userSearchRequest), HttpStatus.OK);
+    @PostMapping("/freelancer-search")
+    public ResponseEntity<PaginatedResponse<Profile>> searchFreelancer(@RequestBody UserSearchRequest userSearchRequest) {
+        return new ResponseEntity<>(userService.searchFreelancer(userSearchRequest), HttpStatus.OK);
 
     }
 

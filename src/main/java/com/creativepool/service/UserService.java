@@ -8,6 +8,7 @@ import com.creativepool.models.*;
 import com.creativepool.repository.ClientRepository;
 import com.creativepool.repository.FreelancerRepository;
 import com.creativepool.repository.UserRepository;
+import com.creativepool.utils.Utils;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.BlobInfo;
@@ -341,7 +342,7 @@ public class UserService {
 
 
 
-    public PaginatedResponse<Profile> searchUser(UserSearchRequest userSearchRequest) {
+    public PaginatedResponse<Profile> searchFreelancer(UserSearchRequest userSearchRequest) {
         // Validate pagination parameters
         Integer page = userSearchRequest.getPage();
         Integer size = userSearchRequest.getSize();
@@ -355,8 +356,12 @@ public class UserService {
         BigDecimal minPrice = priceRange[0];
         BigDecimal maxPrice = priceRange[1];
 
+        String firstname=userSearchRequest.getFirstname()!=null?userSearchRequest.getFirstname():null;
+        String lastname=userSearchRequest.getLastname()!=null?userSearchRequest.getLastname():null;
+        String username= userSearchRequest.getUsername()!=null? userSearchRequest.getUsername() : null;
+
         // Perform search with pagination
-        List<Object[]> result = userRepository.searchUserData(rating, minPrice, maxPrice, page, size);
+        List<Object[]> result = userRepository.searchUserData(rating, minPrice, maxPrice,username,firstname,lastname, page, size);
 
         // Process search results
         List<Profile> profiles = new ArrayList<>();
@@ -365,7 +370,7 @@ public class UserService {
         for (Object[] row : result) {
             Profile profile = mapRowToProfile(row);
             profiles.add(profile);
-            totalRowCount = (long) row[11]; // Assuming row count is the last column
+            totalRowCount = (long) row[15]; // Assuming row count is the last column
         }
 
         // Calculate pagination details
@@ -389,20 +394,21 @@ public class UserService {
 
     private Profile mapRowToProfile(Object[] row) {
         Profile profile = new Profile();
-        profile.setUsername((String) row[0]);
-        profile.setFirstName((String) row[1]);
-        profile.setLastName((String) row[2]);
-        profile.setPhone((String) row[3]);
-        profile.setEmail((String) row[4]);
-        profile.setProfileImage((String) row[5]);
-
-
-        profile.setDateOfBirth((Date) row[6]);
-        profile.setGender(Gender.values()[(Integer) row[7]]);
-        profile.setCity((String) row[8]);
-        profile.setRating(((BigDecimal) row[9]).doubleValue());
-        profile.setMinCharges((BigDecimal) row[10]);
-
+        profile.setUsername(Utils.getOrDefault((String) row[0], profile.getUsername()));
+        profile.setFirstName(Utils.getOrDefault((String) row[1], profile.getFirstName()));
+        profile.setLastName(Utils.getOrDefault((String) row[2], profile.getLastName()));
+        profile.setPhone(Utils.getOrDefault((String) row[3], profile.getPhone()));
+        profile.setEmail(Utils.getOrDefault((String) row[4], profile.getEmail()));
+        profile.setProfileImage(Utils.getOrDefault((String) row[5], profile.getProfileImage()));
+        profile.setDateOfBirth(Utils.getOrDefault((Date) row[6], profile.getDateOfBirth()));
+        profile.setGender(Utils.getOrDefault(row[7] != null ? Gender.values()[(Integer) row[7]] : null, profile.getGender()));
+        profile.setCity(Utils.getOrDefault((String) row[8], profile.getCity()));
+        profile.setUserType(Utils.getOrDefault(row[9] != null ? UserType.values()[(Integer) row[9]] : null, profile.getUserType()));
+        profile.setUserID(Utils.getOrDefault((UUID) row[10], profile.getUserID()));
+        profile.setBio(Utils.getOrDefault((String) row[11], profile.getBio()));
+        profile.setRating(Utils.getOrDefault(row[12] != null ? ((BigDecimal) row[12]).doubleValue() : null, profile.getRating()));
+        profile.setMinCharges(Utils.getOrDefault((BigDecimal) row[13], profile.getMinCharges()));
+        profile.setFreelancerId(Utils.getOrDefault((UUID) row[10], profile.getFreelancerId()));
         return profile;
     }
 

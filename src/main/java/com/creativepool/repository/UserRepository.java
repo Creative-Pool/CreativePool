@@ -22,11 +22,14 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     public UserEntity findByUsername(String username);
 
 
-   @Query(value = "SELECT * FROM public.search_user_data(:rating,:min_charges,:max_charges, :page, :size)", nativeQuery = true)
+   @Query(value = "SELECT * FROM public.search_freelancer_data(:rating,:min_charges,:max_charges,:username,:firstname,:lastname, :page, :size)", nativeQuery = true)
    List<Object[]> searchUserData(
             @Param("rating") BigDecimal rating,
             @Param("min_charges") BigDecimal min_charges,
             @Param("max_charges") BigDecimal max_charges,
+            @Param("username") String username,
+            @Param("firstname") String firstname,
+            @Param("lastname") String lastname,
             @Param("page") int page,
             @Param("size") int size);
 
