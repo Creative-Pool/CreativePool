@@ -23,7 +23,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
 
    @Query(value = "SELECT * FROM public.search_freelancer_data(:rating,:min_charges,:max_charges,:username,:firstname,:lastname, :page, :size)", nativeQuery = true)
-   List<Object[]> searchUserData(
+   List<Object[]> searchFreelancerUserData(
             @Param("rating") BigDecimal rating,
             @Param("min_charges") BigDecimal min_charges,
             @Param("max_charges") BigDecimal max_charges,

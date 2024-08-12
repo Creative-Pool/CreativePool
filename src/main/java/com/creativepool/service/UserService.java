@@ -342,7 +342,7 @@ public class UserService {
 
 
 
-    public PaginatedResponse<Profile> searchFreelancer(UserSearchRequest userSearchRequest) {
+    public PaginatedResponse<Profile> searchFreelancer(UserSearchRequest userSearchRequest) throws IOException {
         // Validate pagination parameters
         Integer page = userSearchRequest.getPage();
         Integer size = userSearchRequest.getSize();
@@ -361,7 +361,7 @@ public class UserService {
         String username= userSearchRequest.getUsername()!=null? userSearchRequest.getUsername() : null;
 
         // Perform search with pagination
-        List<Object[]> result = userRepository.searchUserData(rating, minPrice, maxPrice,username,firstname,lastname, page, size);
+        List<Object[]> result = userRepository.searchFreelancerUserData(rating, minPrice, maxPrice,username,firstname,lastname, page, size);
 
         // Process search results
         List<Profile> profiles = new ArrayList<>();
@@ -392,14 +392,16 @@ public class UserService {
         return new BigDecimal[]{minPrice, maxPrice};
     }
 
-    private Profile mapRowToProfile(Object[] row) {
+    private Profile mapRowToProfile(Object[] row) throws IOException {
         Profile profile = new Profile();
         profile.setUsername(Utils.getOrDefault((String) row[0], profile.getUsername()));
         profile.setFirstName(Utils.getOrDefault((String) row[1], profile.getFirstName()));
         profile.setLastName(Utils.getOrDefault((String) row[2], profile.getLastName()));
         profile.setPhone(Utils.getOrDefault((String) row[3], profile.getPhone()));
         profile.setEmail(Utils.getOrDefault((String) row[4], profile.getEmail()));
-        profile.setProfileImage(Utils.getOrDefault((String) row[5], profile.getProfileImage()));
+
+
+        profile.setProfileImage(Utils.getOrDefault(row[5] != null ? cloudStorageService.generateSignedUrl((String) row[5] ): null, profile.getProfileImage()));
         profile.setDateOfBirth(Utils.getOrDefault((Date) row[6], profile.getDateOfBirth()));
         profile.setGender(Utils.getOrDefault(row[7] != null ? Gender.values()[(Integer) row[7]] : null, profile.getGender()));
         profile.setCity(Utils.getOrDefault((String) row[8], profile.getCity()));

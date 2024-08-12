@@ -53,7 +53,7 @@ public class UserController {
     }
 
     @PostMapping("/freelancer-search")
-    public ResponseEntity<PaginatedResponse<Profile>> searchFreelancer(@RequestBody UserSearchRequest userSearchRequest) {
+    public ResponseEntity<PaginatedResponse<Profile>> searchFreelancer(@RequestBody UserSearchRequest userSearchRequest) throws IOException {
         return new ResponseEntity<>(userService.searchFreelancer(userSearchRequest), HttpStatus.OK);
 
     }
