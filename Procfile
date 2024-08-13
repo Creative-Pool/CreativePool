@@ -1,1 +1,1 @@
-web: chmod +x ./mvnw && java -jar target/Creative-Pool-0.0.1-SNAPSHOT.jar
+web: java -jar target/Creative-Pool-0.0.1-SNAPSHOT.jar
