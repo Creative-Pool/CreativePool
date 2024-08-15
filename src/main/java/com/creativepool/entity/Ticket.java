@@ -55,4 +55,11 @@ public class Ticket {
 
     @Column(name = "complexity")
     private String ticketComplexity;
+
+    @Column(name="budget")
+    private Double budget;
+
+    @Column(name="assignee")
+    private String assignee;
+
 }

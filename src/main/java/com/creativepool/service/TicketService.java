@@ -2,18 +2,18 @@ package com.creativepool.service;
 
 
 import com.creativepool.constants.Errors;
-import com.creativepool.entity.FreelancerTicketApplicants;
-import com.creativepool.entity.Ticket;
-import com.creativepool.entity.TicketStatus;
-import com.creativepool.entity.UserType;
+import com.creativepool.entity.*;
 import com.creativepool.exception.BadRequestException;
+import com.creativepool.exception.CreativePoolException;
 import com.creativepool.exception.ResourceNotFoundException;
 import com.creativepool.models.*;
-import com.creativepool.repository.FreelancerRepository;
-import com.creativepool.repository.FreelancerTicketApplicantsRepository;
-import com.creativepool.repository.TicketRepository;
+import com.creativepool.repository.*;
 import com.creativepool.utils.Utils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +42,12 @@ public class TicketService {
 
     @Autowired
     CloudStorageService cloudStorageService;
+
+    @Autowired
+    ClientReachOutRepository clientReachOutRepository;
+
+    @Autowired
+    FreelancerReachOutRepository freelancerReachOutRepository;
 
     public TicketResponseDTO createTicket(TicketDTO ticketDTO, List<MultipartFile> multipartFiles) throws IOException {
         List<String> filenames=new ArrayList<>();
@@ -100,7 +106,9 @@ public class TicketService {
         responseDTO.setTicketStatus(ticket.getTicketStatus());
         responseDTO.setFreelancerId(ticket.getFreelancerId());
         responseDTO.setClientId(ticket.getClientId());
-
+        responseDTO.setTicketComplexity(ticket.getTicketComplexity());
+        responseDTO.setTicketBudget(ticket.getBudget());
+        responseDTO.setAssignee(ticket.getAssignee());
         if(!StringUtils.isEmpty(ticket.getFilename())) {
             String[] files = ticket.getFilename().split(",");
             for (String file : files) {
@@ -108,19 +116,31 @@ public class TicketService {
             }
             responseDTO.setUrls(fileUrls);
         }
+
+
         return responseDTO;
     }
 
     public TicketResponseDTO assignTicket(UUID ticketId, UUID freelancerId) throws IOException {
         Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new BadRequestException(String.format(Errors.E00004.getMessage(),ticketId)));
 
-        Integer totalTicketsAssigned=freelancerRepository.getTotalTicketsAssigned(freelancerId);
-        totalTicketsAssigned++;
-        if(totalTicketsAssigned>5){
+        List<Object[]> freelancerDetails=freelancerRepository.getFreelancerNameAndTotalTicketsAssigned(freelancerId);
+
+        Object[] freelancerDetail=freelancerDetails.get(0);
+
+        String firstname= (String)freelancerDetail[0];
+        String lastname =(String)freelancerDetail[1];
+        Integer totalAssignedTickets=(Integer)freelancerDetail[2];
+
+
+
+        totalAssignedTickets++;
+        if(totalAssignedTickets>5){
             throw new IllegalStateException(Errors.E00008.getMessage());
         }
-        freelancerRepository.updateTotalTicketsAssigned(totalTicketsAssigned,freelancerId);
+        freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets,freelancerId);
         ticket.setFreelancerId(freelancerId);
+        ticket.setAssignee(firstname+" "+lastname);
         Ticket savedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(savedTicket);
     }
@@ -153,9 +173,6 @@ public class TicketService {
 
 
     public PaginatedResponse<TicketSearchResponse> searchUser(TicketSearchRequest ticketSearchRequest) throws IOException {
-
-
-
         Integer page = ticketSearchRequest.getPage();
         Integer size = ticketSearchRequest.getSize();
 
@@ -181,16 +198,16 @@ public class TicketService {
                 ? ticketSearchRequest.getComplexity()
                 : null;
 
-        UUID clientId=(ticketSearchRequest.getClientId()!=null)?ticketSearchRequest.getClientId():null;
+        UUID clientId = (ticketSearchRequest.getClientId() != null) ? ticketSearchRequest.getClientId() : null;
 
         Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
         Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
         Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
 
-        List<Object[]> result = ticketRepository.searchTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,clientId,page, size);
+        List<Object[]> result = ticketRepository.searchTickets(complexity, minPrice, maxPrice, ticketStatus, rating, startDate, endDate, clientId, page, size);
 
-        if(result!=null && !result.isEmpty()) {
-            List<TicketSearchResponse> responses = convertToResponse(result,UserType.CLIENT);
+        if (result != null && !result.isEmpty()) {
+            List<TicketSearchResponse> responses = convertToResponse(result, UserType.CLIENT);
 
 
             long totalRowCount = (long) result.get(0)[17];
@@ -388,5 +405,100 @@ public class TicketService {
         return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
 
+
+    // Add a new freelancer reach out entry
+    public FreelancerReachOut createFreelancerReachOut(FreelancerReachOut freelancerReachOut) {
+        try {
+            return freelancerReachOutRepository.save(freelancerReachOut);
+        } catch (Exception e) {
+            throw new CreativePoolException(Errors.E00012.getMessage());
+        }
+    }
+
+
+    // Add a new client reach out entry
+    public ClientReachOut createClientReachOut(ClientReachOut clientReachOut) {
+        try {
+            return clientReachOutRepository.save(clientReachOut);
+        } catch (Exception e) {
+            throw new CreativePoolException(Errors.E00011.getMessage());
+        }
+    }
+
+
+    public PaginatedResponse<TicketResponseDTO> getClientReachOut(UUID freelancerId,Integer page,Integer size) throws IOException {
+
+        if (page == null || size == null) {
+            throw new BadRequestException(Errors.E00001.getMessage());
+        }
+
+        Pageable pageable= PageRequest.of(page,size);
+
+        Page<Object[]> tickets = clientReachOutRepository.getClientReachOutTickets(freelancerId,pageable);
+        List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
+        List<Ticket> ticketsList = new ArrayList<>();
+
+        if(!tickets.isEmpty()) {
+
+            for (Object[] array : tickets) {
+                TicketResponseDTO dto = new TicketResponseDTO();
+                dto.setTicketID(array[0] != null ? (UUID) array[0] : null);
+                dto.setTitle(array[1] != null ? (String) array[1] : null);
+                dto.setDescription(array[2] != null ? (String) array[2] : null);
+                dto.setReporterName(array[3] != null ? (String) array[3] : null);
+                dto.setCreatedDate(array[4] != null ? (Date) array[4] : null);
+                dto.setPrice(array[5] != null ? (Double) ((BigDecimal) array[5]).doubleValue() : null);
+                dto.setTicketDeadline(array[6] != null ? (Date) array[6] : null);
+
+                if (((String) array[7]) != null) {
+                    String[] files = ((String) array[7]).split(",");
+                    List<String> imagesUrls = new ArrayList<>();
+                    for (String file : files) {
+                        imagesUrls.add(cloudStorageService.generateSignedUrl(file));
+                    }
+
+                    dto.setUrls(imagesUrls);
+                }
+
+                // dto.setFilename(array[7] != null ? (String) array[7] : null);
+                dto.setUrl(array[8] != null ? (String) array[8] : null);
+                dto.setTicketStatus(array[9] != null ? TicketStatus.values()[(Integer) array[9]] : null);
+                dto.setFreelancerId(array[10] != null ? (UUID) array[10] : null);
+                dto.setClientId(array[11] != null ? (UUID) array[11] : null);
+                dto.setTicketComplexity(array[12] != null ? (String) array[12] : null);
+                dto.setTicketBudget(array[13] != null ? ((BigDecimal) array[13]).doubleValue() : null);
+
+                ticketResponseDTOS.add(dto);
+
+            }
+            return new PaginatedResponse<>(tickets.getTotalElements(), ticketResponseDTOS, ((page + 1) * size >= tickets.getTotalElements()), page + 1, tickets.getTotalPages());
+        }
+        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
+    }
+
+
+    public PaginatedResponse<Profile> getFreelancerReachOut(UUID ticketId,Integer page,Integer size) throws IOException {
+
+        if (page == null || size == null) {
+            throw new BadRequestException(Errors.E00001.getMessage());
+        }
+
+        Pageable pageable= PageRequest.of(page,size);
+        Page<Object[]> freelancerDetails = freelancerReachOutRepository.getFreelancersName(ticketId,pageable);
+        List<Profile> profiles = new ArrayList<>();
+        List<Ticket> ticketsList = new ArrayList<>();
+
+        if(!freelancerDetails.isEmpty()) {
+            for (Object[] freelancerDetail : freelancerDetails) {
+                Profile profile=new Profile();
+                profile.setFirstName(getOrDefault((String)freelancerDetail[0], profile.getFirstName()));
+                profile.setLastName(getOrDefault((String)freelancerDetail[1], profile.getLastName()));
+                profile.setFreelancerId(getOrDefault((UUID)freelancerDetail[2], profile.getFreelancerId()));
+                profiles.add(profile);
+            }
+            return new PaginatedResponse<>(freelancerDetails.getTotalElements(), profiles, ((page + 1) * size >= freelancerDetails.getTotalElements()), page + 1, freelancerDetails.getTotalPages());
+        }
+        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
+    }
 
 }

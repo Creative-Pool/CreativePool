@@ -17,8 +17,8 @@ import java.util.UUID;
 @Repository
 public interface FreelancerRepository extends JpaRepository<Freelancer, UUID> {
 
-    @Query("select f.totalAssignedTickets from FREELANCER f where f.id=:freelancerId")
-    public Integer getTotalTicketsAssigned(UUID freelancerId);
+    @Query(value = "select a.firstname,a.lastname, f.total_assigned_ticket from FREELANCER f join account a on f.user_id=a.user_id where f.freelancer_id=:freelancerId",nativeQuery = true)
+    public List<Object[]> getFreelancerNameAndTotalTicketsAssigned(UUID freelancerId);
 
     @Modifying
     @Transactional

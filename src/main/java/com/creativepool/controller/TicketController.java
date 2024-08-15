@@ -1,5 +1,7 @@
 package com.creativepool.controller;
 
+import com.creativepool.entity.ClientReachOut;
+import com.creativepool.entity.FreelancerReachOut;
 import com.creativepool.entity.UserType;
 import com.creativepool.models.*;
 import com.creativepool.service.TicketService;
@@ -24,7 +26,6 @@ import java.util.UUID;
 @CrossOrigin(origins = "*")
 @Slf4j
 public class TicketController {
-
 
     @Autowired
     private TicketService ticketService;
@@ -64,8 +65,8 @@ public class TicketController {
     }
 
     @PostMapping("/{ticketId}/assign")
-    public ResponseEntity<TicketResponseDTO> assignTicket(@PathVariable UUID ticketId, @RequestParam UUID userId) throws IOException {
-        TicketResponseDTO assignedTicket = ticketService.assignTicket(ticketId, userId);
+    public ResponseEntity<TicketResponseDTO> assignTicket(@PathVariable UUID ticketId, @RequestParam UUID freelancerId) throws IOException {
+        TicketResponseDTO assignedTicket = ticketService.assignTicket(ticketId, freelancerId);
         return ResponseEntity.ok(assignedTicket);
     }
 
@@ -102,8 +103,26 @@ public class TicketController {
         return new ResponseEntity<>(pp, HttpStatus.OK);
     }
 
+    @PostMapping("/ticket/client-reach-out")
+    public ResponseEntity<ClientReachOut> createClientReachOut(@RequestBody ClientReachOut clientReachOut) {
+        ClientReachOut savedReachOut = ticketService.createClientReachOut(clientReachOut);
+        return ResponseEntity.ok(savedReachOut);
+    }
 
+    @PostMapping("/ticket/freelancer-reach-out")
+    public ResponseEntity<FreelancerReachOut> createFreelancerReachOut(@RequestBody FreelancerReachOut freelancerReachOut) {
+        FreelancerReachOut savedReachOut = ticketService.createFreelancerReachOut(freelancerReachOut);
+        return ResponseEntity.ok(savedReachOut);
+    }
 
+    @GetMapping("/ticket/client-reach-out")
+    public ResponseEntity<PaginatedResponse<TicketResponseDTO> > getClientReachOut(@RequestParam(name = "freelancerId") UUID freelancerId,@RequestParam(name = "page") Integer page,@RequestParam(name = "size") Integer size) throws IOException {
+    return new ResponseEntity<>(ticketService.getClientReachOut(freelancerId,page,size),HttpStatus.OK);
 
+    }
 
+    @GetMapping("/ticket/freelancer-reach-out")
+    public ResponseEntity<PaginatedResponse<Profile> > getFreelancerReachOut(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "page") Integer page,@RequestParam(name = "size") Integer size) throws IOException {
+        return new ResponseEntity<>(ticketService.getFreelancerReachOut(ticketId,page,size),HttpStatus.OK);
+    }
 }

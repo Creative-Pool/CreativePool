@@ -21,4 +21,7 @@ public class TicketResponseDTO {
     private TicketStatus ticketStatus;
     private UUID freelancerId;
     private UUID clientId;
+    private String ticketComplexity;
+    private Double ticketBudget;
+    private String assignee;
 }
