@@ -14,7 +14,7 @@
 	<name>Creative-Pool</name>
 	<description>Creative Pool</description>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>18</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
