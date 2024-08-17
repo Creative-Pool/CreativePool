@@ -15,8 +15,9 @@ import java.util.UUID;
 public interface TicketRepository extends JpaRepository<Ticket, UUID> {
 
 
-    @Query(value = "SELECT * FROM public.search_ticket_data(:complexity, :budgetMin, :budgetMax, :ticketStatus, :rating, :startDate, :endDate,:clientId,:page, :size)", nativeQuery = true)
+    @Query(value = "SELECT * FROM public.search_ticket_data(:searchType, :complexity, :budgetMin, :budgetMax, :ticketStatus, :rating, :startDate, :endDate,:client_or_freelancer_id,:page, :size)", nativeQuery = true)
     List<Object[]> searchTickets(
+            @Param("searchType") String searchType,
             @Param("complexity") String complexity,
             @Param("budgetMin") BigDecimal budgetMin,
             @Param("budgetMax") BigDecimal budgetMax,
@@ -24,7 +25,7 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
             @Param("rating") BigDecimal rating,
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
-            @Param("clientId") UUID clientId,
+            @Param("client_or_freelancer_id") UUID client_or_freelancer_id,
             @Param("page") Integer page,
             @Param("size") Integer size
     );

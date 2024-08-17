@@ -10,6 +10,8 @@ public class TicketSearchRequest {
 
     Double rating;
 
+    String searchType;
+
     String complexity;
 
     String priceRange;
@@ -18,9 +20,7 @@ public class TicketSearchRequest {
 
     String dates;
 
-    UUID clientId;
-
-    UUID freelancerId;
+    UUID clientOrFreelancerId;
 
     Integer page;
 

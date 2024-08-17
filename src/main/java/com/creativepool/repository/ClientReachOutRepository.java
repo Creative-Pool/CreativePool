@@ -16,7 +16,12 @@ import java.util.UUID;
 public interface ClientReachOutRepository extends JpaRepository<ClientReachOut, UUID> {
 
 
-    @Query(value = "select t.* from client_reach_out cro join ticket t on cro.ticket_id=t.ticket_id where t.ticket_status!=3 order by cro.reached_out_at desc",nativeQuery = true)
+    @Query(value = "select t.* from client_reach_out cro join ticket t on cro.ticket_id=t.ticket_id where t.ticket_status!=3 and cro.freelancer_id=:uuid order by cro.reached_out_at desc",nativeQuery = true)
     public Page<Object[]> getClientReachOutTickets(UUID uuid, Pageable pageable);
+
+
+    @Query(value = "select a.firstname,a.lastname,f.freelancer_id from client_reach_out cro join freelancer f on cro.freelancer_id=f.freelancer_id join account a on f.user_id=a.user_id where cro.ticket_id=:ticketId",nativeQuery = true)
+    public Page<Object[]> getFreelancersName(UUID ticketId, Pageable pageable);
+
 
 }

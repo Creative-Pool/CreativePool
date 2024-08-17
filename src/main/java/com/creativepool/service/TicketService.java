@@ -172,7 +172,7 @@ public class TicketService {
     }
 
 
-    public PaginatedResponse<TicketSearchResponse> searchUser(TicketSearchRequest ticketSearchRequest) throws IOException {
+    public PaginatedResponse<TicketSearchResponse> searchTickets(TicketSearchRequest ticketSearchRequest) throws IOException {
         Integer page = ticketSearchRequest.getPage();
         Integer size = ticketSearchRequest.getSize();
 
@@ -198,19 +198,19 @@ public class TicketService {
                 ? ticketSearchRequest.getComplexity()
                 : null;
 
-        UUID clientId = (ticketSearchRequest.getClientId() != null) ? ticketSearchRequest.getClientId() : null;
+        UUID uuid = (ticketSearchRequest.getClientOrFreelancerId() != null) ? ticketSearchRequest.getClientOrFreelancerId() : null;
 
         Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
         Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
         Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
 
-        List<Object[]> result = ticketRepository.searchTickets(complexity, minPrice, maxPrice, ticketStatus, rating, startDate, endDate, clientId, page, size);
+        List<Object[]> result = ticketRepository.searchTickets(ticketSearchRequest.getSearchType(),complexity, minPrice, maxPrice, ticketStatus, rating, startDate, endDate, uuid, page, size);
 
         if (result != null && !result.isEmpty()) {
             List<TicketSearchResponse> responses = convertToResponse(result, UserType.CLIENT);
 
 
-            long totalRowCount = (long) result.get(0)[17];
+            long totalRowCount = (long) result.get(0)[15];
             boolean isLastPage = ((long) (page + 1) * size >= totalRowCount);
             Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
 
@@ -286,12 +286,10 @@ public class TicketService {
             response.setTicketStatus((TicketStatus) Utils.getOrDefault(row[9] != null ? TicketStatus.values()[(Integer) row[9]] : null, response.getTicketStatus()));
             response.setFreelancerId((UUID) Utils.getOrDefault((UUID) row[10], response.getFreelancerId()));
             response.setClientId((UUID) Utils.getOrDefault((UUID) row[11], response.getClientId()));
-            response.setUsername((String) Utils.getOrDefault((String) row[12], response.getUsername()));
-            response.setFirstName((String) Utils.getOrDefault((String) row[13], response.getFirstName()));
-            response.setLastName((String) Utils.getOrDefault((String) row[14], response.getLastName()));
-            response.setComplexity((String) Utils.getOrDefault((String) row[15], response.getComplexity()));
+            response.setAssignee((String) Utils.getOrDefault((String) row[12], response.getAssignee()));
+            response.setComplexity((String) Utils.getOrDefault((String) row[13], response.getComplexity()));
             if(userType.equals(UserType.CLIENT))
-                 response.setRating((Double) Utils.getOrDefault(row[16] != null ? ((BigDecimal) row[16]).doubleValue() : null, response.getRating()));
+                 response.setRating((Double) Utils.getOrDefault(row[14] != null ? ((BigDecimal) row[14]).doubleValue() : null, response.getRating()));
             responses.add(response);
         }
         }
@@ -355,55 +353,55 @@ public class TicketService {
 
     }
 
-    public PaginatedResponse<TicketSearchResponse> searchFreelancerTicket(TicketSearchRequest ticketSearchRequest) throws IOException {
-
-        Integer page = ticketSearchRequest.getPage();
-        Integer size = ticketSearchRequest.getSize();
-
-        if (page == null || size == null) {
-            throw new BadRequestException(Errors.E00001.getMessage());
-        }
-
-        BigDecimal rating = (ticketSearchRequest.getRating() != null)
-                ? BigDecimal.valueOf(ticketSearchRequest.getRating())
-                : null;
-
-        Integer ticketStatus = (ticketSearchRequest.getTicketStatus() != null)
-                ? ticketSearchRequest.getTicketStatus().ordinal()
-                : null;
-
-        // Fetching and parsing price range
-        BigDecimal[] priceRange = parsePriceRange(ticketSearchRequest.getPriceRange());
-        BigDecimal minPrice = (priceRange[0] != null) ? priceRange[0] : null;
-        BigDecimal maxPrice = (priceRange[1] != null) ? priceRange[1] : null;
-
-        // Fetching other parameters
-        String complexity = (ticketSearchRequest.getComplexity() != null && !ticketSearchRequest.getComplexity().isEmpty())
-                ? ticketSearchRequest.getComplexity()
-                : null;
-
-        UUID freelancerId=(ticketSearchRequest.getFreelancerId()!=null)?ticketSearchRequest.getFreelancerId():null;
-
-        Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
-        Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
-        Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
-
-        List<Object[]> result = ticketRepository.searchFreelancerTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,freelancerId,page, size);
-
-        if(result!=null && !result.isEmpty()) {
-            List<TicketSearchResponse> responses = convertToResponse(result,UserType.FREELANCER);
-
-
-            long totalRowCount = (long) result.get(0)[16];
-            boolean isLastPage = ((page + 1) * size >= totalRowCount);
-            Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
-
-
-            return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
-
-        }
-        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
-    }
+//    public PaginatedResponse<TicketSearchResponse> searchFreelancerTicket(TicketSearchRequest ticketSearchRequest) throws IOException {
+//
+//        Integer page = ticketSearchRequest.getPage();
+//        Integer size = ticketSearchRequest.getSize();
+//
+//        if (page == null || size == null) {
+//            throw new BadRequestException(Errors.E00001.getMessage());
+//        }
+//
+//        BigDecimal rating = (ticketSearchRequest.getRating() != null)
+//                ? BigDecimal.valueOf(ticketSearchRequest.getRating())
+//                : null;
+//
+//        Integer ticketStatus = (ticketSearchRequest.getTicketStatus() != null)
+//                ? ticketSearchRequest.getTicketStatus().ordinal()
+//                : null;
+//
+//        // Fetching and parsing price range
+//        BigDecimal[] priceRange = parsePriceRange(ticketSearchRequest.getPriceRange());
+//        BigDecimal minPrice = (priceRange[0] != null) ? priceRange[0] : null;
+//        BigDecimal maxPrice = (priceRange[1] != null) ? priceRange[1] : null;
+//
+//        // Fetching other parameters
+//        String complexity = (ticketSearchRequest.getComplexity() != null && !ticketSearchRequest.getComplexity().isEmpty())
+//                ? ticketSearchRequest.getComplexity()
+//                : null;
+//
+//        UUID freelancerId=(ticketSearchRequest.getFreelancerId()!=null)?ticketSearchRequest.getFreelancerId():null;
+//
+//        Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
+//        Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
+//        Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
+//
+//        List<Object[]> result = ticketRepository.searchFreelancerTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,freelancerId,page, size);
+//
+//        if(result!=null && !result.isEmpty()) {
+//            List<TicketSearchResponse> responses = convertToResponse(result,UserType.FREELANCER);
+//
+//
+//            long totalRowCount = (long) result.get(0)[16];
+//            boolean isLastPage = ((page + 1) * size >= totalRowCount);
+//            Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
+//
+//
+//            return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
+//
+//        }
+//        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
+//    }
 
 
     // Add a new freelancer reach out entry
@@ -426,7 +424,7 @@ public class TicketService {
     }
 
 
-    public PaginatedResponse<TicketResponseDTO> getClientReachOut(UUID freelancerId,Integer page,Integer size) throws IOException {
+    public PaginatedResponse<TicketResponseDTO> fetchTicketsReceivedByFreelancers(UUID freelancerId,Integer page,Integer size) throws IOException {
 
         if (page == null || size == null) {
             throw new BadRequestException(Errors.E00001.getMessage());
@@ -477,7 +475,7 @@ public class TicketService {
     }
 
 
-    public PaginatedResponse<Profile> getFreelancerReachOut(UUID ticketId,Integer page,Integer size) throws IOException {
+    public PaginatedResponse<Profile> getApplicantsForTickets(UUID ticketId,Integer page,Integer size) throws IOException {
 
         if (page == null || size == null) {
             throw new BadRequestException(Errors.E00001.getMessage());
@@ -497,6 +495,81 @@ public class TicketService {
                 profiles.add(profile);
             }
             return new PaginatedResponse<>(freelancerDetails.getTotalElements(), profiles, ((page + 1) * size >= freelancerDetails.getTotalElements()), page + 1, freelancerDetails.getTotalPages());
+        }
+        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
+    }
+
+
+    public PaginatedResponse<Profile> getFreelancersReachedOutByClient(UUID ticketId,Integer page,Integer size) throws IOException {
+        if (page == null || size == null) {
+            throw new BadRequestException(Errors.E00001.getMessage());
+        }
+
+        Pageable pageable= PageRequest.of(page,size);
+        Page<Object[]> freelancerDetails = clientReachOutRepository.getFreelancersName(ticketId,pageable);
+        List<Profile> profiles = new ArrayList<>();
+        List<Ticket> ticketsList = new ArrayList<>();
+
+        if(!freelancerDetails.isEmpty()) {
+            for (Object[] freelancerDetail : freelancerDetails) {
+                Profile profile=new Profile();
+                profile.setFirstName(getOrDefault((String)freelancerDetail[0], profile.getFirstName()));
+                profile.setLastName(getOrDefault((String)freelancerDetail[1], profile.getLastName()));
+                profile.setFreelancerId(getOrDefault((UUID)freelancerDetail[2], profile.getFreelancerId()));
+                profiles.add(profile);
+            }
+            return new PaginatedResponse<>(freelancerDetails.getTotalElements(), profiles, ((page + 1) * size >= freelancerDetails.getTotalElements()), page + 1, freelancerDetails.getTotalPages());
+        }
+        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
+    }
+
+
+    public PaginatedResponse<TicketResponseDTO> fetchTicketsAppliedByFreelancers(UUID freelancerId,Integer page,Integer size) throws IOException {
+
+        if (page == null || size == null) {
+            throw new BadRequestException(Errors.E00001.getMessage());
+        }
+
+        Pageable pageable= PageRequest.of(page,size);
+
+        Page<Object[]> tickets = freelancerReachOutRepository.getTicketsAppliedByFreelancer(freelancerId,pageable);
+        List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
+        List<Ticket> ticketsList = new ArrayList<>();
+
+        if(!tickets.isEmpty()) {
+
+            for (Object[] array : tickets) {
+                TicketResponseDTO dto = new TicketResponseDTO();
+                dto.setTicketID(array[0] != null ? (UUID) array[0] : null);
+                dto.setTitle(array[1] != null ? (String) array[1] : null);
+                dto.setDescription(array[2] != null ? (String) array[2] : null);
+                dto.setReporterName(array[3] != null ? (String) array[3] : null);
+                dto.setCreatedDate(array[4] != null ? (Date) array[4] : null);
+                dto.setPrice(array[5] != null ? (Double) ((BigDecimal) array[5]).doubleValue() : null);
+                dto.setTicketDeadline(array[6] != null ? (Date) array[6] : null);
+
+                if (((String) array[7]) != null) {
+                    String[] files = ((String) array[7]).split(",");
+                    List<String> imagesUrls = new ArrayList<>();
+                    for (String file : files) {
+                        imagesUrls.add(cloudStorageService.generateSignedUrl(file));
+                    }
+
+                    dto.setUrls(imagesUrls);
+                }
+
+                // dto.setFilename(array[7] != null ? (String) array[7] : null);
+                dto.setUrl(array[8] != null ? (String) array[8] : null);
+                dto.setTicketStatus(array[9] != null ? TicketStatus.values()[(Integer) array[9]] : null);
+                dto.setFreelancerId(array[10] != null ? (UUID) array[10] : null);
+                dto.setClientId(array[11] != null ? (UUID) array[11] : null);
+                dto.setTicketComplexity(array[12] != null ? (String) array[12] : null);
+                dto.setTicketBudget(array[13] != null ? ((BigDecimal) array[13]).doubleValue() : null);
+
+                ticketResponseDTOS.add(dto);
+
+            }
+            return new PaginatedResponse<>(tickets.getTotalElements(), ticketResponseDTOS, ((page + 1) * size >= tickets.getTotalElements()), page + 1, tickets.getTotalPages());
         }
         return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
