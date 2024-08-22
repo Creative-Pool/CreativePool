@@ -10,6 +10,8 @@ import com.creativepool.models.*;
 import com.creativepool.repository.*;
 import com.creativepool.utils.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +33,7 @@ import static com.creativepool.utils.Utils.getOrDefault;
 @Service
 public class TicketService {
 
+    private static final Logger log = LoggerFactory.getLogger(TicketService.class);
     @Autowired
     TicketRepository ticketRepository;
 
@@ -573,5 +576,20 @@ public class TicketService {
         }
         return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
+
+
+    public void rejectFreelancerRequest(UUID ticketId,UUID freelancerId) {
+        log.info("Deletion of request started {},{}",ticketId,freelancerId);
+        freelancerReachOutRepository.deleteAppliedTicket(ticketId,freelancerId);
+        log.info("Deletion of request completed {},{}",ticketId,freelancerId);
+    }
+
+    public void rejectClientRequest(UUID ticketId,UUID freelancerId) {
+        log.info("Deletion of request started {},{}",ticketId,freelancerId);
+        clientReachOutRepository.deleteAppliedTicket(ticketId,freelancerId);
+        log.info("Deletion of request completed {},{}",ticketId,freelancerId);
+    }
+
+
 
 }

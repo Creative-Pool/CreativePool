@@ -4,6 +4,7 @@ import com.creativepool.entity.ClientReachOut;
 import com.creativepool.entity.FreelancerReachOut;
 import com.creativepool.entity.UserType;
 import com.creativepool.models.*;
+import com.creativepool.service.CloudStorageService;
 import com.creativepool.service.TicketService;
 import jdk.jfr.ContentType;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,9 @@ public class TicketController {
 
     @Autowired
     private TicketService ticketService;
+
+    @Autowired
+    CloudStorageService cloudStorageService;
 
     @PostMapping("/create-ticket")
     public ResponseEntity<List<TicketResponseDTO>> createTicket(
@@ -141,5 +145,35 @@ public class TicketController {
     @GetMapping("/ticket/applicants")
     public ResponseEntity<PaginatedResponse<Profile> > getApplicantsForTickets(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "page") Integer page,@RequestParam(name = "size") Integer size) throws IOException {
         return new ResponseEntity<>(ticketService.getApplicantsForTickets(ticketId,page,size),HttpStatus.OK);
+    }
+
+    @DeleteMapping("/freelancer/reject")
+    public ResponseEntity<Void> rejectFreelancerRequest(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "freelancerId") UUID freelancerId) {
+        ticketService.rejectFreelancerRequest(ticketId,freelancerId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @DeleteMapping("/client/reject")
+    public ResponseEntity<Void> rejectClientRequest(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "freelancerId") UUID freelancerId) {
+        ticketService.rejectClientRequest(ticketId,freelancerId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+//    @DeleteMapping("/{ticketId}")
+//    public ResponseEntity<Void> cancelClientRequest(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "freelancerId") UUID freelancerId) {
+//        ticketService.deleteTicket(ticketId);
+//        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+//    }
+//
+//    @DeleteMapping("/{ticketId}")
+//    public ResponseEntity<Void> cancelFreelancerRequest(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "freelancerId") UUID freelancerId) {
+//        ticketService.deleteTicket(ticketId);
+//        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+//    }
+
+    @GetMapping("/sign-url")
+    public ResponseEntity<String> getSignURL() throws MalformedURLException {
+        String tickets = cloudStorageService.generateSignedUrlForUpload();
+        return new ResponseEntity<>(tickets, HttpStatus.OK);
     }
 }
