@@ -34,6 +34,7 @@ public class TicketController {
     @Autowired
     CloudStorageService cloudStorageService;
 
+    //done
     @PostMapping("/create-ticket")
     public ResponseEntity<List<TicketResponseDTO>> createTicket(
             @ModelAttribute TicketForm ticketForm) throws IOException {
@@ -52,7 +53,7 @@ public class TicketController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    //client
     @PutMapping("/edit-ticket")
     public ResponseEntity<TicketResponseDTO> editTicket(@ModelAttribute TicketForm ticketForm) throws IOException {
         TicketDTO ticketDTO = ticketForm.getTicketDTO();
@@ -61,31 +62,31 @@ public class TicketController {
         return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
     }
 
-
+    //delete
     @GetMapping("/tickets")
     public ResponseEntity<List<TicketResponseDTO>> getAllTickets() throws MalformedURLException {
         List<TicketResponseDTO> tickets = ticketService.getAllTickets();
         return new ResponseEntity<>(tickets, HttpStatus.OK);
     }
-
+    //client
     @PostMapping("/{ticketId}/assign")
     public ResponseEntity<TicketResponseDTO> assignTicket(@PathVariable UUID ticketId, @RequestParam UUID freelancerId) throws IOException {
         TicketResponseDTO assignedTicket = ticketService.assignTicket(ticketId, freelancerId);
         return ResponseEntity.ok(assignedTicket);
     }
-
+    // done
     @DeleteMapping("/{ticketId}")
     public ResponseEntity<Void> deleteTicket(@PathVariable UUID ticketId) {
         ticketService.deleteTicket(ticketId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
-
+    //delete
     @PostMapping("/{ticketId}/apply")
     public ResponseEntity<Void> applyForTicket(@PathVariable UUID ticketId, @RequestParam UUID freelancerId, @RequestParam UserType userType) {
         ticketService.applyForTicket(freelancerId, ticketId,userType);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
-
+    //done
     @PostMapping("/ticket/search")
     public ResponseEntity<PaginatedResponse<TicketSearchResponse>> searchTickets(@RequestBody TicketSearchRequest ticketSearchRequest) throws IOException {
         log.info("T {}",ticketSearchRequest);
@@ -106,18 +107,18 @@ public class TicketController {
 //        PaginatedResponse<TicketSearchResponse> pp = ticketService.searchFreelancerTicket(ticketSearchRequest);
 //        return new ResponseEntity<>(pp, HttpStatus.OK);
 //    }
-
+    //client
     @PostMapping("/ticket/client-reach-out")
     public ResponseEntity<ClientReachOut> clientReachOutToFreelancerForTicket(@RequestBody ClientReachOut clientReachOut) {
         ClientReachOut savedReachOut = ticketService.createClientReachOut(clientReachOut);
         return ResponseEntity.ok(savedReachOut);
     }
-
+    // done
     @GetMapping("/ticket/freelancer-received")
     public ResponseEntity<PaginatedResponse<TicketResponseDTO>> fetchTicketsReceivedByFreelancers(@RequestParam(name = "freelancerId") UUID freelancerId,@RequestParam(name = "page") Integer page,@RequestParam(name = "size") Integer size) throws IOException {
         return new ResponseEntity<>(ticketService.fetchTicketsReceivedByFreelancers(freelancerId,page,size),HttpStatus.OK);
     }
-
+    //client
     @GetMapping("/ticket/freelancers-reached-out")
     public ResponseEntity<PaginatedResponse<Profile> > getFreelancersReachedOutByClient(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "page") Integer page,@RequestParam(name = "size") Integer size) throws IOException {
         return new ResponseEntity<>(ticketService.getFreelancersReachedOutByClient(ticketId,page,size),HttpStatus.OK);
@@ -128,20 +129,25 @@ public class TicketController {
 //        return new ResponseEntity<>(ticketService.getClientReachOut(freelancerId,page,size),HttpStatus.OK);
 //    }
 
-
+    // done
     @PostMapping("/ticket/freelancer-apply")
     public ResponseEntity<FreelancerReachOut> freelancerApplyForTicket(@RequestBody FreelancerReachOut freelancerReachOut) {
+        log.info("lili:{}", freelancerReachOut);
         FreelancerReachOut savedReachOut = ticketService.createFreelancerReachOut(freelancerReachOut);
+        log.info("pp:{}", savedReachOut);
         return ResponseEntity.ok(savedReachOut);
     }
 
-
+    //done
     @GetMapping("/ticket/freelancer-applied")
     public ResponseEntity<PaginatedResponse<TicketResponseDTO> > fetchTicketsAppliedByFreelancers(@RequestParam(name = "freelancerId") UUID freelancerId,@RequestParam(name = "page") Integer page,@RequestParam(name = "size") Integer size) throws IOException {
-        return new ResponseEntity<>(ticketService.fetchTicketsAppliedByFreelancers(freelancerId,page,size),HttpStatus.OK);
+        log.info("xoo:{},{},{}", freelancerId,page,size);
+        PaginatedResponse<TicketResponseDTO> xoxo = ticketService.fetchTicketsAppliedByFreelancers(freelancerId,page,size);
+        log.info("xoox:{}", xoxo);
+        return new ResponseEntity<>(xoxo,HttpStatus.OK);
     }
 
-
+    //client
     @GetMapping("/ticket/applicants")
     public ResponseEntity<PaginatedResponse<Profile> > getApplicantsForTickets(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "page") Integer page,@RequestParam(name = "size") Integer size) throws IOException {
         return new ResponseEntity<>(ticketService.getApplicantsForTickets(ticketId,page,size),HttpStatus.OK);
