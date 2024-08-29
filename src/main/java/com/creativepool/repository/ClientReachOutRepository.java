@@ -30,5 +30,8 @@ public interface ClientReachOutRepository extends JpaRepository<ClientReachOut, 
     @Query(value = "delete from client_reach_out cro where cro.ticket_id=:ticketId and cro.freelancer_id=:freelancerId",nativeQuery = true)
     public void deleteAppliedTicket(UUID ticketId,UUID freelancerId);
 
+    @Transactional
+    public void deleteByTicketId(UUID ticketId);
+
 
 }

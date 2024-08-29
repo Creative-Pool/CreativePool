@@ -27,5 +27,8 @@ public interface FreelancerReachOutRepository extends JpaRepository<FreelancerRe
     @Query(value = "delete from freelancer_reach_out fro where fro.ticket_id=:ticketId and fro.freelancer_id=:freelancerId",nativeQuery = true)
     public void deleteAppliedTicket(UUID ticketId,UUID freelancerId);
 
+    @Transactional
+    public void deleteByTicketId(UUID ticketId);
+
 
 }

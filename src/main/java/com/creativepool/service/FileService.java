@@ -1,52 +1,60 @@
-//package com.creativepool.service;
-//
-//
-//import com.creativepool.constants.Errors;
-//import com.creativepool.entity.TicketResult;
-//import com.creativepool.exception.ResourceNotFoundException;
-//import com.creativepool.repository.TicketResultRepository;
-//import com.google.auth.Credentials;
-//import com.google.auth.oauth2.GoogleCredentials;
-//import com.google.cloud.storage.*;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.core.io.ClassPathResource;
-//import org.springframework.core.io.Resource;
-//import org.springframework.core.io.UrlResource;
-//import org.springframework.stereotype.Service;
-//import org.springframework.web.multipart.MultipartFile;
-//
-//import java.io.ByteArrayOutputStream;
-//import java.io.IOException;
-//import java.net.MalformedURLException;
-//import java.net.URL;
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.Optional;
-//import java.util.UUID;
-//import java.util.concurrent.TimeUnit;
-//import java.util.stream.Collectors;
-//import java.util.zip.ZipEntry;
-//import java.util.zip.ZipOutputStream;
-//
-//@Service
-//public class FileService {
-//
-//    @Value("${spring.cloud.gcp.storage.bucket}")
-//    private String bucketName;
-//
-//    @Autowired
-//    TicketResultRepository ticketResultRepository;
-//
-//    @Autowired
-//    CloudStorageService cloudStorageService;
-//
-//
+package com.creativepool.service;
+
+
+import com.creativepool.constants.Errors;
+import com.creativepool.entity.TicketResult;
+import com.creativepool.exception.CreativePoolException;
+import com.creativepool.exception.ResourceNotFoundException;
+import com.creativepool.models.PaginatedResponse;
+import com.creativepool.repository.TicketResultRepository;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+@Service
+public class FileService {
+
+    @Value("${spring.cloud.gcp.storage.bucket}")
+    private String bucketName;
+
+    @Autowired
+    TicketResultRepository ticketResultRepository;
+
+    @Autowired
+    CloudStorageService cloudStorageService;
+
+    Logger logger= LoggerFactory.getLogger(FileService.class);
+
+
 //    public void uploadFile(List<MultipartFile> files, UUID
 //                           ) throws IOException {
 //        List<String> filenames=new ArrayList<>();
 //
-//        if (ticketDTO.getDeleteUrls() != null && !ticketDTO.getDeleteUrls().isEmpty()) {
+//        if (tick
+//        etDTO.getDeleteUrls() != null && !ticketDTO.getDeleteUrls().isEmpty()) {
 //            for (String url : ticketDTO.getDeleteUrls()) {
 //                String filename=cloudStorageService.getFilenameFromSignedUrl(url);
 //                cloudStorageService.deleteFileUsingSignedUrl(url);
@@ -133,4 +141,32 @@
 //        }
 //        return null;
 //    }
-//}
+
+
+    public TicketResult updateTicketResult(String filename,UUID ticketId) throws IOException {
+        try {
+            TicketResult ticketResult = new TicketResult();
+            ticketResult.setTicketId(ticketId);
+            ticketResult.setFilename(filename);
+            ticketResult.setLastUpload(new Date());
+            return ticketResultRepository.saveAndFlush(ticketResult);
+        }catch (Exception ex){
+            logger.error(ex.getMessage());
+            throw new CreativePoolException(Errors.E00013.getMessage());
+        }
+    }
+
+    public PaginatedResponse<TicketResult> getTicketResult(UUID ticketId,Integer page,Integer size) throws IOException {
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "last_Upload"));
+            Page<TicketResult> ticketResult= ticketResultRepository.getTicketResult(ticketId,pageable);
+            List<TicketResult> ticketResultList=ticketResult.stream().collect(Collectors.toList());
+
+            return new PaginatedResponse<>(ticketResult.getTotalElements(), ticketResultList, ((page + 1) * size >= ticketResult.getTotalElements()), page + 1, ticketResult.getTotalPages());
+
+        }catch (Exception ex){
+            logger.error(ex.getMessage());
+            throw new CreativePoolException(Errors.E00013.getMessage());
+        }
+    }
+}

@@ -159,21 +159,10 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-//    @DeleteMapping("/{ticketId}")
-//    public ResponseEntity<Void> cancelClientRequest(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "freelancerId") UUID freelancerId) {
-//        ticketService.deleteTicket(ticketId);
-//        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-//    }
-//
-//    @DeleteMapping("/{ticketId}")
-//    public ResponseEntity<Void> cancelFreelancerRequest(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "freelancerId") UUID freelancerId) {
-//        ticketService.deleteTicket(ticketId);
-//        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-//    }
 
-    @GetMapping("/sign-url")
-    public ResponseEntity<String> getSignURL() throws MalformedURLException {
-        String tickets = cloudStorageService.generateSignedUrlForUpload();
-        return new ResponseEntity<>(tickets, HttpStatus.OK);
-    }
+//    @GetMapping("/sign-url")
+//    public ResponseEntity<String> getSignURL() throws MalformedURLException {
+//        String tickets = cloudStorageService.generateSignedUrlForUpload();
+//        return new ResponseEntity<>(tickets, HttpStatus.OK);
+//    }
 }

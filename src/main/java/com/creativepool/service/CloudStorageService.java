@@ -4,10 +4,16 @@ import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.*;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,6 +22,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +35,9 @@ public class CloudStorageService {
 
     @Value("${spring.cloud.gcp.storage.bucket}")
     private String bucketName;
+
+    @Autowired
+    RestTemplate restTemplate;
 
 
     public CloudStorageService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
@@ -100,5 +110,48 @@ public class CloudStorageService {
         return storage.get(BlobId.of(bucketName, filename));
 
     }
+
+
+    public String generateSignedUrlForUpload(String objectName){
+
+        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, objectName).build();
+
+        // Define the expiration time for the signed URL
+        long expiration = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1); // 1 hour
+
+        // Generate signed URL
+        URL signedUrl = storage.signUrl(
+                blobInfo,
+                1,
+                TimeUnit.HOURS,
+                Storage.SignUrlOption.httpMethod(HttpMethod.POST),
+                Storage.SignUrlOption.withV4Signature(),
+                Storage.SignUrlOption.withQueryParams(Map.of("uploadType", "resumable")),
+                Storage.SignUrlOption.withExtHeaders(Map.of("x-goog-resumable", "start"))
+
+        );
+
+        System.out.println("Signed URL: " + signedUrl.toString());
+
+
+
+        return signedUrl.toString();
+    }
+
+    public String initiateResumableUpload(String signedUrl) {
+        // Create headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.set("x-goog-resumable", "start");
+
+        // Create an empty request entity
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);
+
+        // Use RestTemplate to make the POST request
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response =restTemplate.exchange(signedUrl, org.springframework.http.HttpMethod.POST, requestEntity, String.class);
+        return  response.getHeaders().getFirst(HttpHeaders.LOCATION);
+
+     }
 
 }

@@ -164,13 +164,12 @@ public class TicketService {
 
     }
 
-
+    //This needs to be discussed.
     public void deleteTicket(UUID ticketId) {
         // Check if the ticket exists
         Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new BadRequestException(String.format(Errors.E00004.getMessage(), ticketId)));
-        // Delete all applications related to the ticket
-        freelancerTicketApplicantsRepository.deleteByTicketID(ticketId);
-        // Delete the ticket
+        freelancerReachOutRepository.deleteByTicketId(ticketId);
+        clientReachOutRepository.deleteByTicketId(ticketId);
         ticketRepository.delete(ticket);
     }
 

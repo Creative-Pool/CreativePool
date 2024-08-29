@@ -11,7 +11,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "ticketresult")
+@Entity(name = "ticket_result")
 public class TicketResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,9 +21,9 @@ public class TicketResult {
     @Column(name = "ticket_id")
     private UUID ticketId;
 
-    @Column(name = "image_url")
-    private String filenames;
+    @Column(name = "filename")
+    private String filename;
 
-    @Column(name = "video_url")
-    private String videoURL;
+    @Column(name = "last_upload")
+    private Date lastUpload;
 }
