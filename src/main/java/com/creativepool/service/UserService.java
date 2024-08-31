@@ -3,6 +3,7 @@ package com.creativepool.service;
 import com.creativepool.constants.Errors;
 import com.creativepool.entity.*;
 import com.creativepool.exception.BadRequestException;
+import com.creativepool.exception.CreativePoolException;
 import com.creativepool.exception.ResourceNotFoundException;
 import com.creativepool.models.*;
 import com.creativepool.repository.ClientRepository;
@@ -19,6 +20,8 @@ import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -64,23 +67,15 @@ public class UserService {
     @Autowired
     CloudStorageService cloudStorageService;
 
-    private final Storage storage;
-
-    public UserService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
-        Resource resource = new ClassPathResource(credentialFile);
-        Credentials credentials = GoogleCredentials
-                .fromStream(resource.getInputStream());
-        storage = StorageOptions.newBuilder().setCredentials(credentials)
-                .setProjectId(projectId).build().getService();
-    }
-
+    Logger logger= LoggerFactory.getLogger(UserService.class);
 
     public List<Profile> createUser(User user) {
+        logger.info("Action to create user started {}",user);
         List<Profile> profiles = new ArrayList<>();
         try {
             if (ObjectUtils.isEmpty(user))
                 throw new BadRequestException(Errors.E00001.getMessage());
-            UserEntity userEntity = userRepository.findByUsername(user.getUsername());
+            UserEntity userEntity = userRepository.findByPhone(user.getPhone());
             if (!ObjectUtils.isEmpty(userEntity))
                 throw new BadRequestException(Errors.E00003.getMessage());
 
@@ -116,15 +111,22 @@ public class UserService {
             Profile profile=toProfile(userEntity,clientId,freelancerId);
             profiles.add(profile);
         } catch (DataIntegrityViolationException e) {
+            logger.error(e.getMessage(),e);
             if (e.getMessage().contains("account_email_key"))
                 throw new DataIntegrityViolationException(Errors.E00006.getMessage());
             if (e.getMessage().contains("account_phone_key"))
                 throw new DataIntegrityViolationException(Errors.E00007.getMessage());
+        }catch (BadRequestException ex){
+            logger.error(ex.getMessage(),ex);
+            throw new BadRequestException(ex.getMessage());
+        }catch (Exception ex){
+            logger.error(ex.getMessage(),ex);
+            throw new CreativePoolException(Errors.E00013.getMessage());
         }
         return profiles;
     }
 
-    public  Profile toProfile(UserEntity userEntity,UUID clientId,UUID freelancerId) {
+    private  Profile toProfile(UserEntity userEntity,UUID clientId,UUID freelancerId) {
         if (userEntity == null) {
             return null;
         }
@@ -148,6 +150,7 @@ public class UserService {
 
     public void createProfile(Profile profile, MultipartFile file) {
         try {
+            logger.info("Action to create profile started {}",profile);
             switch (profile.getUserType().toString()) {
                 case "FREELANCER":
                     createFreelancerProfile(profile, file);
@@ -156,19 +159,26 @@ public class UserService {
                     createClientProfile(profile, file);
                     break;
             }
-        } catch (DataIntegrityViolationException | IOException e) {
-            throw new DataIntegrityViolationException(Errors.E00005.getMessage());
+            logger.info("Action to create profile completed");
+        } catch (BadRequestException ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new BadRequestException(ex.getMessage());
+        } catch (CreativePoolException ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new CreativePoolException(ex.getMessage());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new CreativePoolException(Errors.E00013.getMessage());
         }
     }
 
     private void createFreelancerProfile(Profile profile, MultipartFile file) throws IOException {
-
-            Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
-            UserEntity userEntity;
-            if (optionalUserEntity.isPresent()) {
-                List<String> filenames=new ArrayList<>();
-                if(!file.isEmpty())
-                    cloudStorageService.uploadFile(file,filenames);
+        Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
+        UserEntity userEntity;
+        if (optionalUserEntity.isPresent()) {
+            List<String> filenames = new ArrayList<>();
+            if (!file.isEmpty())
+                cloudStorageService.uploadFile(file, filenames);
 
             userEntity = optionalUserEntity.get();
             userEntity.setCity(profile.getCity());
@@ -185,8 +195,9 @@ public class UserService {
 
             userRepository.save(userEntity);
             freelancerRepository.save(freelancer);
+        } else {
+            throw new BadRequestException(Errors.E00014.getMessage());
         }
-
     }
 
     private void createClientProfile(Profile profile, MultipartFile file) throws IOException {
@@ -195,9 +206,8 @@ public class UserService {
         UserEntity userEntity;
         if (optionalUserEntity.isPresent()) {
             userEntity = optionalUserEntity.get();
-            List<String> filenames=new ArrayList<>();
-            if(!file.isEmpty())
-                cloudStorageService.uploadFile(file,filenames);
+            List<String> filenames = new ArrayList<>();
+            if (!file.isEmpty()) cloudStorageService.uploadFile(file, filenames);
 
             userEntity.setCity(profile.getCity());
             userEntity.setGender(profile.getGender());
@@ -212,20 +222,27 @@ public class UserService {
 
             userRepository.save(userEntity);
             clientRepository.save(client);
+        } else {
+            throw new BadRequestException(Errors.E00014.getMessage());
         }
     }
 
     public List<Profile> getProfile(String phoneNo, UserType userType) throws IOException {
-
-        return switch (userType.toString()) {
-            case "FREELANCER" -> getFreelancerProfile(phoneNo, userType);
-            case "CLIENT" -> getClientProfile(phoneNo, userType);
-            default -> new ArrayList<>();
-        };
+        try {
+            return switch (userType.toString()) {
+                case "FREELANCER" -> getFreelancerProfile(phoneNo, userType);
+                case "CLIENT" -> getClientProfile(phoneNo, userType);
+                default -> new ArrayList<>();
+            };
+        } catch (Exception e) {
+            logger.error("Error fetching profile for phone number: {} and user type: {}", phoneNo, userType, e);
+            throw new CreativePoolException(Errors.E00015.getMessage());
+        }
     }
 
 
     private List<Profile> getFreelancerProfile(String phoneNo, UserType userType) throws IOException {
+        logger.info("Fetching freelancer profile for phone number: {}", phoneNo);
         List<Profile> profiles = new ArrayList<>();
         List<WorkHistory> workHistoryList = new ArrayList<>();
         List<Object[]> freelancerObjectArray = freelancerRepository.findFreelancerByPhoneNo(phoneNo, userType.ordinal());
@@ -250,39 +267,39 @@ public class UserService {
             profile.setUsername(row[8] != null ? (String) row[8] : null);
             if (row[9] != null) {
 
-                    String[] files = ((String) row[9]).split(",");
-                    for (String file : files) {
-                        profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
-                    }
-                    profile.setProfileImage(String.join(",",profileImagesUrl));
+                String[] files = ((String) row[9]).split(",");
+                for (String file : files) {
+                    profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
+                }
+                profile.setProfileImage(String.join(",", profileImagesUrl));
 
 
             }
 
-                if (row[10] != null) {
-                    profile.setUserType(UserType.values()[(Integer) row[10]]);
-                } else {
-                    profile.setUserType(null); // or set to a default value if needed
+            if (row[10] != null) {
+                profile.setUserType(UserType.values()[(Integer) row[10]]);
+            } else {
+                profile.setUserType(null); // or set to a default value if needed
+            }
+
+            profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
+            profile.setBio(row[12] != null ? (String) row[12] : null);
+
+            if (row[13] != null) {
+                profile.setEducationalQualification(EducationalQualificationType.values()[(Integer) row[13]]);
+            } else {
+                profile.setEducationalQualification(null); // or set to a default value if needed
+            }
+
+            profile.setMinCharges(row[14] != null ? (BigDecimal) row[14] : null);
+
+            if (row[15] != null) {
+                List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15], TicketStatus.CLOSED.ordinal());
+
+                for (Object[] object : workHistoryObjectArray) {
+                    WorkHistory workHistory = new WorkHistory(object[0] != null ? (String) object[0] : null, object[1] != null ? (String) object[1] : null, object[2] != null ? ((BigDecimal) object[2]).doubleValue() : null);
+                    workHistoryList.add(workHistory);
                 }
-
-                profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
-                profile.setBio(row[12] != null ? (String) row[12] : null);
-
-                if (row[13] != null) {
-                    profile.setEducationalQualification(EducationalQualificationType.values()[(Integer) row[13]]);
-                } else {
-                    profile.setEducationalQualification(null); // or set to a default value if needed
-                }
-
-                profile.setMinCharges(row[14] != null ? (BigDecimal) row[14] : null);
-
-                if (row[15] != null) {
-                    List<Object[]> workHistoryObjectArray = freelancerRepository.getWorkHistory((UUID) row[15],TicketStatus.CLOSED.ordinal());
-
-                    for (Object[] object : workHistoryObjectArray) {
-                        WorkHistory workHistory = new WorkHistory(object[0] != null ? (String) object[0] : null, object[1] != null ? (String) object[1] : null, object[2] != null ? ((BigDecimal) object[2]).doubleValue() : null);
-                        workHistoryList.add(workHistory);
-                    }
 
                 profile.setWorkHistory(workHistoryList);
                 profile.setFreelancerId(row[15] != null ? (UUID) row[15] : null);
@@ -293,6 +310,7 @@ public class UserService {
     }
 
     private List<Profile> getClientProfile(String phoneNo, UserType userType) throws IOException {
+        logger.info("Fetching client profile for phone number: {}", phoneNo);
         List<Profile> profiles = new ArrayList<>();
         List<Object[]> clientObjectArray = clientRepository.findClientByPhoneNo(phoneNo, userType.ordinal());
         if (clientObjectArray != null && !clientObjectArray.isEmpty()) {
@@ -317,11 +335,11 @@ public class UserService {
 
             if (row[9] != null) {
 
-                    String[] files = ((String) row[9]).split(",");
-                    for (String file : files) {
-                        profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
-                    }
-                    profile.setProfileImage(String.join(",",profileImagesUrl));
+                String[] files = ((String) row[9]).split(",");
+                for (String file : files) {
+                    profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
+                }
+                profile.setProfileImage(String.join(",", profileImagesUrl));
 
 
             }
@@ -343,41 +361,51 @@ public class UserService {
 
 
     public PaginatedResponse<Profile> searchFreelancer(UserSearchRequest userSearchRequest) throws IOException {
-        // Validate pagination parameters
-        Integer page = userSearchRequest.getPage();
-        Integer size = userSearchRequest.getSize();
-        if (page == null || size == null) {
-            throw new BadRequestException(Errors.E00001.getMessage());
+        try {
+            logger.info("Action to search freelancer started {}",userSearchRequest);
+            // Validate pagination parameters
+            Integer page = userSearchRequest.getPage();
+            Integer size = userSearchRequest.getSize();
+            if (page == null || size == null) {
+                throw new BadRequestException(Errors.E00001.getMessage());
+            }
+
+            // Prepare search parameters
+            BigDecimal rating = userSearchRequest.getRating() != null ? BigDecimal.valueOf(userSearchRequest.getRating()) : null;
+            BigDecimal[] priceRange = parsePriceRange(userSearchRequest.getPriceRange());
+            BigDecimal minPrice = priceRange[0];
+            BigDecimal maxPrice = priceRange[1];
+
+            String firstname = userSearchRequest.getFirstname() != null ? userSearchRequest.getFirstname() : null;
+            String lastname = userSearchRequest.getLastname() != null ? userSearchRequest.getLastname() : null;
+            String username = userSearchRequest.getUsername() != null ? userSearchRequest.getUsername() : null;
+
+            // Perform search with pagination
+            List<Object[]> result = userRepository.searchFreelancerUserData(rating, minPrice, maxPrice, username, firstname, lastname, page, size);
+
+            // Process search results
+            List<Profile> profiles = new ArrayList<>();
+            long totalRowCount = 0;
+
+            for (Object[] row : result) {
+                Profile profile = mapRowToProfile(row);
+                profiles.add(profile);
+                totalRowCount = (long) row[15]; // Assuming row count is the last column
+            }
+
+            // Calculate pagination details
+            boolean isLastPage = ((page + 1) * size >= totalRowCount);
+            Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
+            logger.info("Action to search freelancer completed");
+            return new PaginatedResponse<>(totalRowCount, profiles, isLastPage, page + 1, totalPages);
+        }catch(BadRequestException ex){
+            logger.error(ex.getMessage(),ex);
+            throw new BadRequestException(ex.getMessage());
+        }catch (Exception ex){
+            logger.error(ex.getMessage(),ex);
+            throw new CreativePoolException(Errors.E00013.getMessage());
         }
 
-        // Prepare search parameters
-        BigDecimal rating = userSearchRequest.getRating() != null ? BigDecimal.valueOf(userSearchRequest.getRating()) : null;
-        BigDecimal[] priceRange = parsePriceRange(userSearchRequest.getPriceRange());
-        BigDecimal minPrice = priceRange[0];
-        BigDecimal maxPrice = priceRange[1];
-
-        String firstname=userSearchRequest.getFirstname()!=null?userSearchRequest.getFirstname():null;
-        String lastname=userSearchRequest.getLastname()!=null?userSearchRequest.getLastname():null;
-        String username= userSearchRequest.getUsername()!=null? userSearchRequest.getUsername() : null;
-
-        // Perform search with pagination
-        List<Object[]> result = userRepository.searchFreelancerUserData(rating, minPrice, maxPrice,username,firstname,lastname, page, size);
-
-        // Process search results
-        List<Profile> profiles = new ArrayList<>();
-        long totalRowCount = 0;
-
-        for (Object[] row : result) {
-            Profile profile = mapRowToProfile(row);
-            profiles.add(profile);
-            totalRowCount = (long) row[15]; // Assuming row count is the last column
-        }
-
-        // Calculate pagination details
-        boolean isLastPage = ((page + 1) * size >= totalRowCount);
-        Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
-
-        return new PaginatedResponse<>(totalRowCount, profiles, isLastPage, page + 1, totalPages);
     }
 
     private BigDecimal[] parsePriceRange(String priceRange) {
@@ -426,8 +454,9 @@ public class UserService {
                 default:
                     throw new ResourceNotFoundException("User type not found");
             }
-        } catch (IOException e) {
-            throw new DataIntegrityViolationException(Errors.E00006.getMessage(), e); // Assume E00006 is an edit-specific error message
+        } catch (ResourceNotFoundException | IOException e) {
+            logger.error(e.getMessage(),e);
+            throw new ResourceNotFoundException(e.getMessage()); // Assume E00006 is an edit-specific error message
         }
     }
 
@@ -438,14 +467,13 @@ public class UserService {
             UserEntity userEntity = optionalUserEntity.get();
             List<String> filenames = new ArrayList<>();
             if (file != null && !file.isEmpty()) {
-                String oldProfilePicture=userEntity.getFilename();
+                String oldProfilePicture = userEntity.getFilename();
                 cloudStorageService.uploadFile(file, filenames);
                 userEntity.setFilename(String.join(",", filenames));
 
-                if(!StringUtils.isEmpty(oldProfilePicture))
-                    cloudStorageService.deleteFile(bucketName,oldProfilePicture);
+                if (!StringUtils.isEmpty(oldProfilePicture))
+                    cloudStorageService.deleteFile(bucketName, oldProfilePicture);
             }
-
 
 
             userEntity.setCity(getOrDefault(profile.getCity(), userEntity.getCity()));
@@ -461,7 +489,7 @@ public class UserService {
 
                 userRepository.save(userEntity);
                 freelancerRepository.save(freelancer);
-            }  else {
+            } else {
                 throw new ResourceNotFoundException("Freelancer profile not found");
             }
         } else {
@@ -470,7 +498,7 @@ public class UserService {
     }
 
     private void editClientProfile(Profile profile, MultipartFile file) throws IOException {
-      log.info("Action to edit the client ");
+      log.info("Action to edit the client started {}",profile);
         Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
         if (optionalUserEntity.isPresent()) {
             UserEntity userEntity = optionalUserEntity.get();

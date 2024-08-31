@@ -29,15 +29,8 @@ public class UserController {
 
     @PostMapping("/create-user")
     public ResponseEntity<List<Profile>> createUser(@RequestBody User user) {
-        log.info("user:{}",user);
-        try {
-            List<Profile> users = userService.createUser(user);
-            return new ResponseEntity<>(users, HttpStatus.CREATED);
-        }
-        catch (Exception ex){
-            log.error("user:{}",ex);
-        }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
+        List<Profile> users = userService.createUser(user);
+        return new ResponseEntity<>(users, HttpStatus.CREATED);
     }
 
     @PostMapping("/create-profile")

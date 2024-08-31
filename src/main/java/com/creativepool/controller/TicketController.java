@@ -81,11 +81,11 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
     //delete
-    @PostMapping("/{ticketId}/apply")
-    public ResponseEntity<Void> applyForTicket(@PathVariable UUID ticketId, @RequestParam UUID freelancerId, @RequestParam UserType userType) {
-        ticketService.applyForTicket(freelancerId, ticketId,userType);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
+//    @PostMapping("/{ticketId}/apply")
+//    public ResponseEntity<Void> applyForTicket(@PathVariable UUID ticketId, @RequestParam UUID freelancerId, @RequestParam UserType userType) {
+//        ticketService.applyForTicket(freelancerId, ticketId,userType);
+//        return ResponseEntity.status(HttpStatus.CREATED).build();
+//    }
     //done
     @PostMapping("/ticket/search")
     public ResponseEntity<PaginatedResponse<TicketSearchResponse>> searchTickets(@RequestBody TicketSearchRequest ticketSearchRequest) throws IOException {

@@ -1,9 +1,12 @@
 package com.creativepool.service;
 
+import com.creativepool.exception.CreativePoolException;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.*;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -28,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 
 import java.net.MalformedURLException;
 
+
+
 @Service
 public class CloudStorageService {
 
@@ -39,6 +44,7 @@ public class CloudStorageService {
     @Autowired
     RestTemplate restTemplate;
 
+    Logger logger= LoggerFactory.getLogger(CloudStorageService.class);
 
     public CloudStorageService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
         Resource resource = new ClassPathResource(credentialFile);
@@ -50,30 +56,21 @@ public class CloudStorageService {
 
 
     public void uploadFile(MultipartFile file, List<String> filenames) throws IOException {
-        String blobName = UUID.randomUUID().toString();
-        BlobInfo blobInfo = storage.create(
-                BlobInfo.newBuilder(bucketName, blobName).setContentType(file.getContentType()).build(),
-                file.getBytes()
-        );
-        URL url =
-                storage.signUrl(
-                        blobInfo,
-                        6,
-                        TimeUnit.DAYS,
-                        Storage.SignUrlOption.httpMethod(HttpMethod.GET),
-                        Storage.SignUrlOption.withV4Signature());
-        filenames.add(getFilenameFromSignedUrl(url.getFile()));
+        try {
+            String blobName = UUID.randomUUID().toString();
+            BlobInfo blobInfo = storage.create(BlobInfo.newBuilder(bucketName, blobName).setContentType(file.getContentType()).build(), file.getBytes());
+            URL url = storage.signUrl(blobInfo, 6, TimeUnit.DAYS, Storage.SignUrlOption.httpMethod(HttpMethod.GET), Storage.SignUrlOption.withV4Signature());
+            filenames.add(getFilenameFromSignedUrl(url.getFile()));
+            logger.info("File uploaded successfully: {}", blobName);
+        } catch (Exception e) {
+            logger.error("Failed to upload file", e);
+            throw new CreativePoolException("Error uploading file");
+        }
     }
 
     public void deleteFile(String bucketName, String fileName) {
         BlobId blobId = BlobId.of(bucketName, fileName);
         boolean deleted = storage.delete(blobId);
-
-        if (deleted) {
-            System.out.println("File deleted successfully.");
-        } else {
-            System.out.println("File not found.");
-        }
     }
 
     public void deleteFileUsingSignedUrl(String signedUrl) throws MalformedURLException {

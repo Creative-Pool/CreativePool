@@ -16,7 +16,19 @@ public enum Errors {
     E00010("Request Id is not present."),
     E00011("Unable to create a record for the client reach-out. Please try again later"),
     E00012("Unable to create a record for the freelancer reach-out. Please try again later"),
-    E00013("Something went wrong");
+    E00013("Something went wrong"),
+    E00014("User doesn't exist"),
+    E00015("Error in fetching profile data"),
+    E00016("Failed to submit freelancer feedback"),
+    E00017("Failed to submit client feedback"),
+    E00018("Unable to create ticket"),
+    E00019("Failed to assign ticket due to an unexpected error."),
+    E00020("An error occurred while editing the ticket."),
+    E00021("An error occurred while fetching tickets."),
+    E00022("An error occurred while fetching applicants."),
+    E00023("An error occurred while fetching freelancers."),
+    E00024("Unexpected error occurred while rejecting freelancer request."),
+    E00025("Unexpected error occurred while rejecting client request.");
 
     private final String message;
     Errors(String message) {

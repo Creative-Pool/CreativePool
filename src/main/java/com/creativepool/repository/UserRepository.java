@@ -21,6 +21,9 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     @Transactional(isolation = Isolation.READ_UNCOMMITTED)
     public UserEntity findByUsername(String username);
 
+    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
+    public UserEntity findByPhone(String phoneNumber);
+
 
    @Query(value = "SELECT * FROM public.search_freelancer_data(:rating,:min_charges,:max_charges,:username,:firstname,:lastname, :page, :size)", nativeQuery = true)
    List<Object[]> searchFreelancerUserData(

@@ -1,5 +1,6 @@
 package com.creativepool.service;
 
+import com.creativepool.constants.Errors;
 import com.creativepool.entity.ClientFeedback;
 import com.creativepool.entity.FreelancerFeedback;
 import com.creativepool.exception.CreativePoolException;
@@ -67,7 +68,7 @@ public class FeedbackService {
             logger.info("Successfully submitted freelancer feedback for freelancerId: {}", request.getFreelancerId());
         } catch (Exception e) {
             logger.error("Error occurred while submitting freelancer feedback for freelancerId: {}", request.getFreelancerId(), e);
-            throw new CreativePoolException("Failed to submit freelancer feedback");
+            throw new CreativePoolException(Errors.E00016.getMessage());
         }
     }
 
@@ -99,7 +100,7 @@ public class FeedbackService {
             logger.info("Successfully submitted client feedback for clientId: {}", request.getClientId());
         } catch (Exception e) {
             logger.error("Error occurred while submitting client feedback for clientId: {}", request.getClientId(), e);
-            throw new CreativePoolException("Failed to submit client feedback");
+            throw new CreativePoolException(Errors.E00017.getMessage());
         }
     }
 

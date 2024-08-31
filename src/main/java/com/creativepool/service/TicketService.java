@@ -33,7 +33,7 @@ import static com.creativepool.utils.Utils.getOrDefault;
 @Service
 public class TicketService {
 
-    private static final Logger log = LoggerFactory.getLogger(TicketService.class);
+    Logger logger = LoggerFactory.getLogger(TicketService.class);
     @Autowired
     TicketRepository ticketRepository;
 
@@ -53,28 +53,37 @@ public class TicketService {
     FreelancerReachOutRepository freelancerReachOutRepository;
 
     public TicketResponseDTO createTicket(TicketDTO ticketDTO, List<MultipartFile> multipartFiles) throws IOException {
-        List<String> filenames=new ArrayList<>();
-        Ticket ticket = new Ticket();
-        // Map DTO fields to entity
-        ticket.setTitle(ticketDTO.getTitle());
-        ticket.setDescription(ticketDTO.getDescription());
-        ticket.setReporterName(ticketDTO.getReporterName());
-        ticket.setPrice(ticketDTO.getPrice());
-        ticket.setTicketDeadline(ticketDTO.getTicketDeadline());
-        ticket.setUrl(ticketDTO.getUrl());
-        ticket.setCreatedDate(new Date());
-        ticket.setClientId(ticketDTO.getClientId());
-        ticket.setTicketStatus(TicketStatus.OPEN); // or any default status
-        ticket.setTicketComplexity(ticketDTO.getTicketComplexity());
-        if(multipartFiles!=null && !multipartFiles.isEmpty()) {
-            for (MultipartFile file : multipartFiles) {
-                cloudStorageService.uploadFile(file, filenames);
+        try {
+            logger.info("Action to create ticket started {}", ticketDTO);
+            List<String> filenames = new ArrayList<>();
+            Ticket ticket = new Ticket();
+            // Map DTO fields to entity
+            ticket.setTitle(ticketDTO.getTitle());
+            ticket.setDescription(ticketDTO.getDescription());
+            ticket.setReporterName(ticketDTO.getReporterName());
+            ticket.setPrice(ticketDTO.getPrice());
+            ticket.setTicketDeadline(ticketDTO.getTicketDeadline());
+            ticket.setUrl(ticketDTO.getUrl());
+            ticket.setCreatedDate(new Date());
+            ticket.setClientId(ticketDTO.getClientId());
+            ticket.setTicketStatus(TicketStatus.OPEN); // or any default status
+            ticket.setTicketComplexity(ticketDTO.getTicketComplexity());
+            if (multipartFiles != null && !multipartFiles.isEmpty()) {
+                for (MultipartFile file : multipartFiles) {
+                    cloudStorageService.uploadFile(file, filenames);
+                }
             }
+            ticket.setFilename(String.join(",", filenames));
+            Ticket savedTicket = ticketRepository.save(ticket);
+            logger.info("Action to create ticket completed {}", savedTicket);
+            return mapToResponseDTO(savedTicket);
+        } catch (CreativePoolException ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new CreativePoolException(ex.getMessage());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new CreativePoolException(Errors.E00018.getMessage());
         }
-        ticket.setFilename(String.join(",", filenames));
-        Ticket savedTicket = ticketRepository.save(ticket);
-
-        return mapToResponseDTO(savedTicket);
     }
 
 
@@ -119,50 +128,47 @@ public class TicketService {
             }
             responseDTO.setUrls(fileUrls);
         }
-
-
         return responseDTO;
     }
 
     public TicketResponseDTO assignTicket(UUID ticketId, UUID freelancerId) throws IOException {
-        Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new BadRequestException(String.format(Errors.E00004.getMessage(),ticketId)));
+        try {
+            logger.info("Assigning ticket with ID '{}' to freelancer with ID '{}'", ticketId, freelancerId);
+            Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new BadRequestException(String.format(Errors.E00004.getMessage(), ticketId)));
+            logger.debug("Ticket found: {}", ticket);
+            List<Object[]> freelancerDetails = freelancerRepository.getFreelancerNameAndTotalTicketsAssigned(freelancerId);
 
-        List<Object[]> freelancerDetails=freelancerRepository.getFreelancerNameAndTotalTicketsAssigned(freelancerId);
+            Object[] freelancerDetail = freelancerDetails.get(0);
 
-        Object[] freelancerDetail=freelancerDetails.get(0);
-
-        String firstname= (String)freelancerDetail[0];
-        String lastname =(String)freelancerDetail[1];
-        Integer totalAssignedTickets=(Integer)freelancerDetail[2];
-
+            String firstname = (String) freelancerDetail[0];
+            String lastname = (String) freelancerDetail[1];
+            Integer totalAssignedTickets = (Integer) freelancerDetail[2];
+            logger.debug("Freelancer details: {} {}, total tickets assigned: {}", firstname, lastname, totalAssignedTickets);
 
 
-        totalAssignedTickets++;
-        if(totalAssignedTickets>5){
-            throw new IllegalStateException(Errors.E00008.getMessage());
+            totalAssignedTickets++;
+            if (totalAssignedTickets > 5) {
+                throw new IllegalStateException(Errors.E00008.getMessage());
+            }
+            freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, freelancerId);
+            ticket.setFreelancerId(freelancerId);
+            ticket.setAssignee(firstname + " " + lastname);
+            Ticket savedTicket = ticketRepository.save(ticket);
+            logger.info("Ticket '{}' assigned to freelancer '{}'", ticketId, freelancerId);
+
+            return mapToResponseDTO(savedTicket);
+        }catch (BadRequestException e) {
+            logger.error( e.getMessage(), e);
+            throw new BadRequestException(e.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            logger.error("Error during ticket assignment: {}", e.getMessage(), e);
+            throw new IllegalArgumentException(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error occurred while assigning ticket: {}", e.getMessage(), e);
+            throw new CreativePoolException(Errors.E00019.getMessage());
         }
-        freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets,freelancerId);
-        ticket.setFreelancerId(freelancerId);
-        ticket.setAssignee(firstname+" "+lastname);
-        Ticket savedTicket = ticketRepository.save(ticket);
-        return mapToResponseDTO(savedTicket);
     }
 
-
-    public void applyForTicket(UUID freelancerId, UUID ticketId, UserType userType) {
-        FreelancerTicketApplicants application = new FreelancerTicketApplicants();
-        application.setFreelancerID(freelancerId);
-        application.setTicketID(ticketId);
-        application.setUserType(userType);
-        freelancerTicketApplicantsRepository.save(application);
-    }
-
-    public void getTicketApplicants(UUID ticketId,UserType userType){
-
-
-
-
-    }
 
     //This needs to be discussed.
     public void deleteTicket(UUID ticketId) {
@@ -175,52 +181,57 @@ public class TicketService {
 
 
     public PaginatedResponse<TicketSearchResponse> searchTickets(TicketSearchRequest ticketSearchRequest) throws IOException {
-        Integer page = ticketSearchRequest.getPage();
-        Integer size = ticketSearchRequest.getSize();
+        try {
+            logger.info("Searching tickets with request: {}", ticketSearchRequest);
+            Integer page = ticketSearchRequest.getPage();
+            Integer size = ticketSearchRequest.getSize();
 
-        if (page == null || size == null) {
-            throw new BadRequestException(Errors.E00001.getMessage());
+            if (page == null || size == null) {
+                throw new BadRequestException(Errors.E00001.getMessage());
+            }
+
+            BigDecimal rating = (ticketSearchRequest.getRating() != null) ? BigDecimal.valueOf(ticketSearchRequest.getRating()) : null;
+
+            Integer ticketStatus = (ticketSearchRequest.getTicketStatus() != null) ? ticketSearchRequest.getTicketStatus().ordinal() : null;
+
+            // Fetching and parsing price range
+            BigDecimal[] priceRange = parsePriceRange(ticketSearchRequest.getPriceRange());
+            BigDecimal minPrice = (priceRange[0] != null) ? priceRange[0] : null;
+            BigDecimal maxPrice = (priceRange[1] != null) ? priceRange[1] : null;
+
+            // Fetching other parameters
+            String complexity = (ticketSearchRequest.getComplexity() != null && !ticketSearchRequest.getComplexity().isEmpty()) ? ticketSearchRequest.getComplexity() : null;
+
+            UUID uuid = (ticketSearchRequest.getClientOrFreelancerId() != null) ? ticketSearchRequest.getClientOrFreelancerId() : null;
+
+            Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
+            Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
+            Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
+
+            List<Object[]> result = ticketRepository.searchTickets(ticketSearchRequest.getSearchType(), complexity, minPrice, maxPrice, ticketStatus, rating, startDate, endDate, uuid, page, size);
+            logger.info("Search completed, found {} records", result != null ? result.size() : 0);
+
+            if (result != null && !result.isEmpty()) {
+                List<TicketSearchResponse> responses = convertToResponse(result, UserType.CLIENT);
+
+
+                long totalRowCount = (long) result.get(0)[15];
+                boolean isLastPage = ((long) (page + 1) * size >= totalRowCount);
+                Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
+
+
+                return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
+
+            }else{
+                return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
+            }
+        } catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
+            throw new BadRequestException(e.getMessage());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw new CreativePoolException(Errors.E00013.getMessage());
         }
-
-        BigDecimal rating = (ticketSearchRequest.getRating() != null)
-                ? BigDecimal.valueOf(ticketSearchRequest.getRating())
-                : null;
-
-        Integer ticketStatus = (ticketSearchRequest.getTicketStatus() != null)
-                ? ticketSearchRequest.getTicketStatus().ordinal()
-                : null;
-
-        // Fetching and parsing price range
-        BigDecimal[] priceRange = parsePriceRange(ticketSearchRequest.getPriceRange());
-        BigDecimal minPrice = (priceRange[0] != null) ? priceRange[0] : null;
-        BigDecimal maxPrice = (priceRange[1] != null) ? priceRange[1] : null;
-
-        // Fetching other parameters
-        String complexity = (ticketSearchRequest.getComplexity() != null && !ticketSearchRequest.getComplexity().isEmpty())
-                ? ticketSearchRequest.getComplexity()
-                : null;
-
-        UUID uuid = (ticketSearchRequest.getClientOrFreelancerId() != null) ? ticketSearchRequest.getClientOrFreelancerId() : null;
-
-        Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
-        Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
-        Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
-
-        List<Object[]> result = ticketRepository.searchTickets(ticketSearchRequest.getSearchType(),complexity, minPrice, maxPrice, ticketStatus, rating, startDate, endDate, uuid, page, size);
-
-        if (result != null && !result.isEmpty()) {
-            List<TicketSearchResponse> responses = convertToResponse(result, UserType.CLIENT);
-
-
-            long totalRowCount = (long) result.get(0)[15];
-            boolean isLastPage = ((long) (page + 1) * size >= totalRowCount);
-            Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
-
-
-            return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
-
-        }
-        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
 
     private BigDecimal[] parsePriceRange(String priceRange) {
@@ -299,44 +310,53 @@ public class TicketService {
     }
 
     public TicketResponseDTO editTicket(TicketDTO ticketDTO,List<MultipartFile> files) throws IOException {
-        Ticket ticket = ticketRepository.findById(ticketDTO.getTicketId())
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id " + ticketDTO.getTicketId()));
+        try {
+            logger.info("Editing ticket with ID: {}", ticketDTO.getTicketId());
+            Ticket ticket = ticketRepository.findById(ticketDTO.getTicketId()).orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id " + ticketDTO.getTicketId()));
 
-        // Get current images
-        List<String> currentImages = new ArrayList<>(Arrays.asList(ticket.getFilename().split(",")));
+            // Get current images
+            List<String> currentImages = new ArrayList<>(Arrays.asList(ticket.getFilename().split(",")));
 
-        // Delete specified images
-        if (ticketDTO.getDeleteUrls() != null && !ticketDTO.getDeleteUrls().isEmpty()) {
-            for (String url : ticketDTO.getDeleteUrls()) {
-                String filename=cloudStorageService.getFilenameFromSignedUrl(url);
-                cloudStorageService.deleteFileUsingSignedUrl(url);
-                currentImages.remove(filename);
+            // Delete specified images
+            if (ticketDTO.getDeleteUrls() != null && !ticketDTO.getDeleteUrls().isEmpty()) {
+                for (String url : ticketDTO.getDeleteUrls()) {
+                    String filename = cloudStorageService.getFilenameFromSignedUrl(url);
+                    cloudStorageService.deleteFileUsingSignedUrl(url);
+                    currentImages.remove(filename);
+                }
             }
-        }
 
-        // Add new images
-        if (files != null && !files.isEmpty()) {
-            List<String> newUploadedUrls = new ArrayList<>();
-            for (MultipartFile file : files) {
-                cloudStorageService.uploadFile(file, newUploadedUrls);
+            // Add new images
+            if (files != null && !files.isEmpty()) {
+                List<String> newUploadedUrls = new ArrayList<>();
+                for (MultipartFile file : files) {
+                    cloudStorageService.uploadFile(file, newUploadedUrls);
+                }
+                currentImages.addAll(newUploadedUrls);
             }
-            currentImages.addAll(newUploadedUrls);
+
+            // Update ticket details
+            ticket.setTitle(getOrDefault(ticketDTO.getTitle(), ticket.getTitle()));
+            ticket.setDescription(getOrDefault(ticketDTO.getDescription(), ticket.getDescription()));
+            ticket.setReporterName(getOrDefault(ticketDTO.getReporterName(), ticket.getReporterName()));
+            ticket.setPrice(getOrDefault(ticketDTO.getPrice(), ticket.getPrice()));
+            ticket.setTicketDeadline(getOrDefault(ticketDTO.getTicketDeadline(), ticket.getTicketDeadline()));
+            ticket.setUrl(getOrDefault(ticketDTO.getUrl(), ticket.getUrl()));
+            ticket.setClientId(getOrDefault(ticketDTO.getClientId(), ticket.getClientId()));
+            ticket.setTicketStatus(getOrDefault(ticketDTO.getTicketStatus(), ticket.getTicketStatus()));
+            ticket.setTicketComplexity(getOrDefault(ticketDTO.getTicketComplexity(), ticket.getTicketComplexity()));
+            ticket.setFilename(currentImages.stream().collect(Collectors.joining(",")));
+
+            Ticket updatedTicket = ticketRepository.save(ticket);
+            logger.info("Ticket updated successfully with ID: {}", updatedTicket.getTicketID());
+            return mapToResponseDTO(updatedTicket);
+        } catch (ResourceNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            throw new ResourceNotFoundException(e.getMessage());
+        }  catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw new CreativePoolException(Errors.E00020.getMessage());
         }
-
-        // Update ticket details
-        ticket.setTitle(getOrDefault(ticketDTO.getTitle(), ticket.getTitle()));
-        ticket.setDescription(getOrDefault(ticketDTO.getDescription(), ticket.getDescription()));
-        ticket.setReporterName(getOrDefault(ticketDTO.getReporterName(), ticket.getReporterName()));
-        ticket.setPrice(getOrDefault(ticketDTO.getPrice(), ticket.getPrice()));
-        ticket.setTicketDeadline(getOrDefault(ticketDTO.getTicketDeadline(), ticket.getTicketDeadline()));
-        ticket.setUrl(getOrDefault(ticketDTO.getUrl(), ticket.getUrl()));
-        ticket.setClientId(getOrDefault(ticketDTO.getClientId(), ticket.getClientId()));
-        ticket.setTicketStatus(getOrDefault(ticketDTO.getTicketStatus(), ticket.getTicketStatus()));
-        ticket.setTicketComplexity(getOrDefault(ticketDTO.getTicketComplexity(), ticket.getTicketComplexity()));
-        ticket.setFilename(currentImages.stream().collect(Collectors.joining(",")));
-
-        Ticket updatedTicket = ticketRepository.save(ticket);
-        return mapToResponseDTO(updatedTicket);
     }
 
     public List<TicketResponseDTO> getFreelancerTickets(UUID freelancerId)  {
@@ -355,62 +375,18 @@ public class TicketService {
 
     }
 
-//    public PaginatedResponse<TicketSearchResponse> searchFreelancerTicket(TicketSearchRequest ticketSearchRequest) throws IOException {
-//
-//        Integer page = ticketSearchRequest.getPage();
-//        Integer size = ticketSearchRequest.getSize();
-//
-//        if (page == null || size == null) {
-//            throw new BadRequestException(Errors.E00001.getMessage());
-//        }
-//
-//        BigDecimal rating = (ticketSearchRequest.getRating() != null)
-//                ? BigDecimal.valueOf(ticketSearchRequest.getRating())
-//                : null;
-//
-//        Integer ticketStatus = (ticketSearchRequest.getTicketStatus() != null)
-//                ? ticketSearchRequest.getTicketStatus().ordinal()
-//                : null;
-//
-//        // Fetching and parsing price range
-//        BigDecimal[] priceRange = parsePriceRange(ticketSearchRequest.getPriceRange());
-//        BigDecimal minPrice = (priceRange[0] != null) ? priceRange[0] : null;
-//        BigDecimal maxPrice = (priceRange[1] != null) ? priceRange[1] : null;
-//
-//        // Fetching other parameters
-//        String complexity = (ticketSearchRequest.getComplexity() != null && !ticketSearchRequest.getComplexity().isEmpty())
-//                ? ticketSearchRequest.getComplexity()
-//                : null;
-//
-//        UUID freelancerId=(ticketSearchRequest.getFreelancerId()!=null)?ticketSearchRequest.getFreelancerId():null;
-//
-//        Date[] dateRange = parseDateRange(ticketSearchRequest.getDates());
-//        Date startDate = (dateRange[0] != null) ? dateRange[0] : null;
-//        Date endDate = (dateRange[1] != null) ? dateRange[1] : null;
-//
-//        List<Object[]> result = ticketRepository.searchFreelancerTickets(complexity, minPrice, maxPrice,ticketStatus,rating,startDate,endDate,freelancerId,page, size);
-//
-//        if(result!=null && !result.isEmpty()) {
-//            List<TicketSearchResponse> responses = convertToResponse(result,UserType.FREELANCER);
-//
-//
-//            long totalRowCount = (long) result.get(0)[16];
-//            boolean isLastPage = ((page + 1) * size >= totalRowCount);
-//            Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
-//
-//
-//            return new PaginatedResponse<>(totalRowCount, responses, isLastPage, page + 1, totalPages);
-//
-//        }
-//        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
-//    }
 
 
     // Add a new freelancer reach out entry
     public FreelancerReachOut createFreelancerReachOut(FreelancerReachOut freelancerReachOut) {
+        logger.info("Attempting to create a new FreelancerReachOut entry with Freelancer ID: {} and Ticket ID: {}",
+                freelancerReachOut.getFreelancerId(), freelancerReachOut.getTicketId());
         try {
-            return freelancerReachOutRepository.save(freelancerReachOut);
+            FreelancerReachOut savedFreelancerReachOut = freelancerReachOutRepository.save(freelancerReachOut);
+            logger.info("Successfully created FreelancerReachOut entry with ID: {}", savedFreelancerReachOut.getId());
+            return savedFreelancerReachOut;
         } catch (Exception e) {
+            logger.error(e.getMessage(),e);
             throw new CreativePoolException(Errors.E00012.getMessage());
         }
     }
@@ -418,175 +394,229 @@ public class TicketService {
 
     // Add a new client reach out entry
     public ClientReachOut createClientReachOut(ClientReachOut clientReachOut) {
+        logger.info("Attempting to create a new ClientReachOut entry with Client ID: {} and Ticket ID: {}",
+                clientReachOut.getClientId(), clientReachOut.getTicketId());
         try {
-            return clientReachOutRepository.save(clientReachOut);
+            ClientReachOut savedClientReachOut = clientReachOutRepository.save(clientReachOut);
+            logger.info("Successfully created ClientReachOut entry with ID: {}", savedClientReachOut.getId());
+            return savedClientReachOut;
         } catch (Exception e) {
+            logger.error("Failed to create ClientReachOut entry. Error: {}", e.getMessage(), e);
             throw new CreativePoolException(Errors.E00011.getMessage());
         }
     }
 
 
     public PaginatedResponse<TicketResponseDTO> fetchTicketsReceivedByFreelancers(UUID freelancerId,Integer page,Integer size) throws IOException {
-
+        logger.info("Fetching tickets received by freelancer with ID: {} for page: {} and size: {}", freelancerId, page, size);
         if (page == null || size == null) {
             throw new BadRequestException(Errors.E00001.getMessage());
         }
 
-        Pageable pageable= PageRequest.of(page,size);
-
-        Page<Object[]> tickets = clientReachOutRepository.getClientReachOutTickets(freelancerId,pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> tickets = clientReachOutRepository.getClientReachOutTickets(freelancerId, pageable);
         List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
         List<Ticket> ticketsList = new ArrayList<>();
+        try {
+            if (!tickets.isEmpty()) {
+                logger.info("Found {} tickets for freelancer with ID: {}", tickets.getTotalElements(), freelancerId);
+                for (Object[] array : tickets) {
+                    TicketResponseDTO dto = new TicketResponseDTO();
+                    dto.setTicketID(array[0] != null ? (UUID) array[0] : null);
+                    dto.setTitle(array[1] != null ? (String) array[1] : null);
+                    dto.setDescription(array[2] != null ? (String) array[2] : null);
+                    dto.setReporterName(array[3] != null ? (String) array[3] : null);
+                    dto.setCreatedDate(array[4] != null ? (Date) array[4] : null);
+                    dto.setPrice(array[5] != null ? (Double) ((BigDecimal) array[5]).doubleValue() : null);
+                    dto.setTicketDeadline(array[6] != null ? (Date) array[6] : null);
 
-        if(!tickets.isEmpty()) {
+                    if (((String) array[7]) != null) {
+                        String[] files = ((String) array[7]).split(",");
+                        List<String> imagesUrls = new ArrayList<>();
+                        for (String file : files) {
+                            imagesUrls.add(cloudStorageService.generateSignedUrl(file));
+                        }
 
-            for (Object[] array : tickets) {
-                TicketResponseDTO dto = new TicketResponseDTO();
-                dto.setTicketID(array[0] != null ? (UUID) array[0] : null);
-                dto.setTitle(array[1] != null ? (String) array[1] : null);
-                dto.setDescription(array[2] != null ? (String) array[2] : null);
-                dto.setReporterName(array[3] != null ? (String) array[3] : null);
-                dto.setCreatedDate(array[4] != null ? (Date) array[4] : null);
-                dto.setPrice(array[5] != null ? (Double) ((BigDecimal) array[5]).doubleValue() : null);
-                dto.setTicketDeadline(array[6] != null ? (Date) array[6] : null);
-
-                if (((String) array[7]) != null) {
-                    String[] files = ((String) array[7]).split(",");
-                    List<String> imagesUrls = new ArrayList<>();
-                    for (String file : files) {
-                        imagesUrls.add(cloudStorageService.generateSignedUrl(file));
+                        dto.setUrls(imagesUrls);
                     }
 
-                    dto.setUrls(imagesUrls);
+                    // dto.setFilename(array[7] != null ? (String) array[7] : null);
+                    dto.setUrl(array[8] != null ? (String) array[8] : null);
+                    dto.setTicketStatus(array[9] != null ? TicketStatus.values()[(Integer) array[9]] : null);
+                    dto.setFreelancerId(array[10] != null ? (UUID) array[10] : null);
+                    dto.setClientId(array[11] != null ? (UUID) array[11] : null);
+                    dto.setTicketComplexity(array[12] != null ? (String) array[12] : null);
+                    dto.setTicketBudget(array[13] != null ? ((BigDecimal) array[13]).doubleValue() : null);
+
+                    ticketResponseDTOS.add(dto);
+
                 }
+                logger.info("Returning paginated response with {} tickets for freelancer with ID: {}", ticketResponseDTOS.size(), freelancerId);
 
-                // dto.setFilename(array[7] != null ? (String) array[7] : null);
-                dto.setUrl(array[8] != null ? (String) array[8] : null);
-                dto.setTicketStatus(array[9] != null ? TicketStatus.values()[(Integer) array[9]] : null);
-                dto.setFreelancerId(array[10] != null ? (UUID) array[10] : null);
-                dto.setClientId(array[11] != null ? (UUID) array[11] : null);
-                dto.setTicketComplexity(array[12] != null ? (String) array[12] : null);
-                dto.setTicketBudget(array[13] != null ? ((BigDecimal) array[13]).doubleValue() : null);
-
-                ticketResponseDTOS.add(dto);
-
+                return new PaginatedResponse<>(tickets.getTotalElements(), ticketResponseDTOS, ((page + 1) * size >= tickets.getTotalElements()), page + 1, tickets.getTotalPages());
             }
-            return new PaginatedResponse<>(tickets.getTotalElements(), ticketResponseDTOS, ((page + 1) * size >= tickets.getTotalElements()), page + 1, tickets.getTotalPages());
+            return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
+        } catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
+            throw new BadRequestException(e.getMessage());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new CreativePoolException(Errors.E00021.getMessage());
         }
-        return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
 
 
     public PaginatedResponse<Profile> getApplicantsForTickets(UUID ticketId,Integer page,Integer size) throws IOException {
-
+        logger.info("Fetching applicants for ticket ID: {} with page: {} and size: {}", ticketId, page, size);
         if (page == null || size == null) {
             throw new BadRequestException(Errors.E00001.getMessage());
         }
 
-        Pageable pageable= PageRequest.of(page,size);
-        Page<Object[]> freelancerDetails = freelancerReachOutRepository.getFreelancersName(ticketId,pageable);
-        List<Profile> profiles = new ArrayList<>();
-        List<Ticket> ticketsList = new ArrayList<>();
+        Pageable pageable = PageRequest.of(page, size);
+        try {
+            Page<Object[]> freelancerDetails = freelancerReachOutRepository.getFreelancersName(ticketId, pageable);
+            List<Profile> profiles = new ArrayList<>();
+            List<Ticket> ticketsList = new ArrayList<>();
 
-        if(!freelancerDetails.isEmpty()) {
-            for (Object[] freelancerDetail : freelancerDetails) {
-                Profile profile=new Profile();
-                profile.setFirstName(getOrDefault((String)freelancerDetail[0], profile.getFirstName()));
-                profile.setLastName(getOrDefault((String)freelancerDetail[1], profile.getLastName()));
-                profile.setFreelancerId(getOrDefault((UUID)freelancerDetail[2], profile.getFreelancerId()));
-                profiles.add(profile);
+            if (!freelancerDetails.isEmpty()) {
+                for (Object[] freelancerDetail : freelancerDetails) {
+                    Profile profile = new Profile();
+                    profile.setFirstName(getOrDefault((String) freelancerDetail[0], profile.getFirstName()));
+                    profile.setLastName(getOrDefault((String) freelancerDetail[1], profile.getLastName()));
+                    profile.setFreelancerId(getOrDefault((UUID) freelancerDetail[2], profile.getFreelancerId()));
+                    profiles.add(profile);
+                }
+                logger.info("Returning paginated response with {} profiles for ticket ID: {}", profiles.size(), ticketId);
+                return new PaginatedResponse<>(freelancerDetails.getTotalElements(), profiles, ((page + 1) * size >= freelancerDetails.getTotalElements()), page + 1, freelancerDetails.getTotalPages());
             }
-            return new PaginatedResponse<>(freelancerDetails.getTotalElements(), profiles, ((page + 1) * size >= freelancerDetails.getTotalElements()), page + 1, freelancerDetails.getTotalPages());
+        }catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
+            throw new CreativePoolException(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Failed to fetch applicants for ticket ID: {}. Error: {}", ticketId, e.getMessage(), e);
+            throw new CreativePoolException(Errors.E00022.getMessage());
         }
         return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
 
 
     public PaginatedResponse<Profile> getFreelancersReachedOutByClient(UUID ticketId,Integer page,Integer size) throws IOException {
+        logger.info("Fetching freelancers reached out by client for ticket ID: {} with page: {} and size: {}", ticketId, page, size);
         if (page == null || size == null) {
             throw new BadRequestException(Errors.E00001.getMessage());
         }
 
-        Pageable pageable= PageRequest.of(page,size);
-        Page<Object[]> freelancerDetails = clientReachOutRepository.getFreelancersName(ticketId,pageable);
-        List<Profile> profiles = new ArrayList<>();
-        List<Ticket> ticketsList = new ArrayList<>();
+        Pageable pageable = PageRequest.of(page, size);
+        try {
+            Page<Object[]> freelancerDetails = clientReachOutRepository.getFreelancersName(ticketId, pageable);
+            List<Profile> profiles = new ArrayList<>();
+            List<Ticket> ticketsList = new ArrayList<>();
 
-        if(!freelancerDetails.isEmpty()) {
-            for (Object[] freelancerDetail : freelancerDetails) {
-                Profile profile=new Profile();
-                profile.setFirstName(getOrDefault((String)freelancerDetail[0], profile.getFirstName()));
-                profile.setLastName(getOrDefault((String)freelancerDetail[1], profile.getLastName()));
-                profile.setFreelancerId(getOrDefault((UUID)freelancerDetail[2], profile.getFreelancerId()));
-                profiles.add(profile);
+            if (!freelancerDetails.isEmpty()) {
+                for (Object[] freelancerDetail : freelancerDetails) {
+                    Profile profile = new Profile();
+                    profile.setFirstName(getOrDefault((String) freelancerDetail[0], profile.getFirstName()));
+                    profile.setLastName(getOrDefault((String) freelancerDetail[1], profile.getLastName()));
+                    profile.setFreelancerId(getOrDefault((UUID) freelancerDetail[2], profile.getFreelancerId()));
+                    profiles.add(profile);
+                }
+                logger.info("Returning paginated response with {} profiles for ticket ID: {}", profiles.size(), ticketId);
+
+                return new PaginatedResponse<>(freelancerDetails.getTotalElements(), profiles, ((page + 1) * size >= freelancerDetails.getTotalElements()), page + 1, freelancerDetails.getTotalPages());
             }
-            return new PaginatedResponse<>(freelancerDetails.getTotalElements(), profiles, ((page + 1) * size >= freelancerDetails.getTotalElements()), page + 1, freelancerDetails.getTotalPages());
+        } catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
+            throw new BadRequestException(e.getMessage());
+        }catch (Exception e) {
+            logger.error("Failed to fetch freelancers reached out by client for ticket ID: {}. Error: {}", ticketId, e.getMessage(), e);
+            throw new CreativePoolException(Errors.E00023.getMessage());
         }
         return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
 
 
-    public PaginatedResponse<TicketResponseDTO> fetchTicketsAppliedByFreelancers(UUID freelancerId,Integer page,Integer size) throws IOException {
+    public PaginatedResponse<TicketResponseDTO> fetchTicketsAppliedByFreelancers(UUID freelancerId,Integer page,Integer size) {
+        logger.info("Fetching tickets applied by freelancer with ID: {} for page: {} and size: {}", freelancerId, page, size);
 
         if (page == null || size == null) {
             throw new BadRequestException(Errors.E00001.getMessage());
         }
 
-        Pageable pageable= PageRequest.of(page,size);
+        Pageable pageable = PageRequest.of(page, size);
+        try {
+            Page<Object[]> tickets = freelancerReachOutRepository.getTicketsAppliedByFreelancer(freelancerId, pageable);
+            List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
+            List<Ticket> ticketsList = new ArrayList<>();
 
-        Page<Object[]> tickets = freelancerReachOutRepository.getTicketsAppliedByFreelancer(freelancerId,pageable);
-        List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
-        List<Ticket> ticketsList = new ArrayList<>();
+            if (!tickets.isEmpty()) {
 
-        if(!tickets.isEmpty()) {
+                for (Object[] array : tickets) {
+                    TicketResponseDTO dto = new TicketResponseDTO();
+                    dto.setTicketID(array[0] != null ? (UUID) array[0] : null);
+                    dto.setTitle(array[1] != null ? (String) array[1] : null);
+                    dto.setDescription(array[2] != null ? (String) array[2] : null);
+                    dto.setReporterName(array[3] != null ? (String) array[3] : null);
+                    dto.setCreatedDate(array[4] != null ? (Date) array[4] : null);
+                    dto.setPrice(array[5] != null ? (Double) ((BigDecimal) array[5]).doubleValue() : null);
+                    dto.setTicketDeadline(array[6] != null ? (Date) array[6] : null);
 
-            for (Object[] array : tickets) {
-                TicketResponseDTO dto = new TicketResponseDTO();
-                dto.setTicketID(array[0] != null ? (UUID) array[0] : null);
-                dto.setTitle(array[1] != null ? (String) array[1] : null);
-                dto.setDescription(array[2] != null ? (String) array[2] : null);
-                dto.setReporterName(array[3] != null ? (String) array[3] : null);
-                dto.setCreatedDate(array[4] != null ? (Date) array[4] : null);
-                dto.setPrice(array[5] != null ? (Double) ((BigDecimal) array[5]).doubleValue() : null);
-                dto.setTicketDeadline(array[6] != null ? (Date) array[6] : null);
+                    if (((String) array[7]) != null) {
+                        String[] files = ((String) array[7]).split(",");
+                        List<String> imagesUrls = new ArrayList<>();
+                        for (String file : files) {
+                            imagesUrls.add(cloudStorageService.generateSignedUrl(file));
+                        }
 
-                if (((String) array[7]) != null) {
-                    String[] files = ((String) array[7]).split(",");
-                    List<String> imagesUrls = new ArrayList<>();
-                    for (String file : files) {
-                        imagesUrls.add(cloudStorageService.generateSignedUrl(file));
+                        dto.setUrls(imagesUrls);
                     }
 
-                    dto.setUrls(imagesUrls);
+                    // dto.setFilename(array[7] != null ? (String) array[7] : null);
+                    dto.setUrl(array[8] != null ? (String) array[8] : null);
+                    dto.setTicketStatus(array[9] != null ? TicketStatus.values()[(Integer) array[9]] : null);
+                    dto.setFreelancerId(array[10] != null ? (UUID) array[10] : null);
+                    dto.setClientId(array[11] != null ? (UUID) array[11] : null);
+                    dto.setTicketComplexity(array[12] != null ? (String) array[12] : null);
+                    dto.setTicketBudget(array[13] != null ? ((BigDecimal) array[13]).doubleValue() : null);
+
+                    ticketResponseDTOS.add(dto);
                 }
+                logger.info("Returning paginated response with {} tickets for freelancer ID: {}", ticketResponseDTOS.size(), freelancerId);
 
-                // dto.setFilename(array[7] != null ? (String) array[7] : null);
-                dto.setUrl(array[8] != null ? (String) array[8] : null);
-                dto.setTicketStatus(array[9] != null ? TicketStatus.values()[(Integer) array[9]] : null);
-                dto.setFreelancerId(array[10] != null ? (UUID) array[10] : null);
-                dto.setClientId(array[11] != null ? (UUID) array[11] : null);
-                dto.setTicketComplexity(array[12] != null ? (String) array[12] : null);
-                dto.setTicketBudget(array[13] != null ? ((BigDecimal) array[13]).doubleValue() : null);
-
-                ticketResponseDTOS.add(dto);
-
+                return new PaginatedResponse<>(tickets.getTotalElements(), ticketResponseDTOS, ((page + 1) * size >= tickets.getTotalElements()), page + 1, tickets.getTotalPages());
+            } else {
+                logger.info("No tickets found for freelancer with ID: {}", freelancerId);
             }
-            return new PaginatedResponse<>(tickets.getTotalElements(), ticketResponseDTOS, ((page + 1) * size >= tickets.getTotalElements()), page + 1, tickets.getTotalPages());
+        } catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
+            throw new BadRequestException(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Failed to fetch tickets applied by freelancer with ID: {}. Error: {}", freelancerId, e.getMessage(), e);
+            throw new CreativePoolException(Errors.E00020.getMessage());
         }
         return new PaginatedResponse<>(0, new ArrayList<>(), true, 0, 0);
     }
 
 
     public void rejectFreelancerRequest(UUID ticketId,UUID freelancerId) {
-        log.info("Deletion of request started {},{}",ticketId,freelancerId);
-        freelancerReachOutRepository.deleteAppliedTicket(ticketId,freelancerId);
-        log.info("Deletion of request completed {},{}",ticketId,freelancerId);
+        try {
+            logger.info("Deletion of request started tickerId {}, freelancerId{}", ticketId, freelancerId);
+            freelancerReachOutRepository.deleteAppliedTicket(ticketId, freelancerId);
+            logger.info("Deletion of request completed tickerId {}, freelancerId{}", ticketId, freelancerId);
+        } catch (Exception e) {
+            logger.error("Unexpected error during deletion of freelancer request: ticketId={}, freelancerId={}. Error: {}", ticketId, freelancerId, e.getMessage(), e);
+            throw new CreativePoolException(Errors.E00024.getMessage());
+        }
     }
 
     public void rejectClientRequest(UUID ticketId,UUID freelancerId) {
-        log.info("Deletion of request started {},{}",ticketId,freelancerId);
-        clientReachOutRepository.deleteAppliedTicket(ticketId,freelancerId);
-        log.info("Deletion of request completed {},{}",ticketId,freelancerId);
+        logger.info("Deletion of request started tickerId {}, freelancerId {}", ticketId, freelancerId);
+        try {
+            clientReachOutRepository.deleteAppliedTicket(ticketId, freelancerId);
+            logger.info("Deletion of request completed tickerId {}, freelancerId {}", ticketId, freelancerId);
+        } catch (Exception e) {
+            logger.error("Unexpected error during deletion of client request: ticketId={}, freelancerId={}. Error: {}", ticketId, freelancerId, e.getMessage(), e);
+            throw new CreativePoolException(Errors.E00025.getMessage());
+        }
     }
 
 
