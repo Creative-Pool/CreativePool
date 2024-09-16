@@ -28,7 +28,8 @@ public enum Errors {
     E00022("An error occurred while fetching applicants."),
     E00023("An error occurred while fetching freelancers."),
     E00024("Unexpected error occurred while rejecting freelancer request."),
-    E00025("Unexpected error occurred while rejecting client request.");
+    E00025("Unexpected error occurred while rejecting client request."),
+    E00026("Error in creating meeting");
 
     private final String message;
     Errors(String message) {
