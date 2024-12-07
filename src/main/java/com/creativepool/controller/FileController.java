@@ -2,10 +2,12 @@ package com.creativepool.controller;
 
 
 import com.creativepool.constants.Errors;
+import com.creativepool.constants.Status;
 import com.creativepool.entity.TicketResult;
 import com.creativepool.exception.CreativePoolException;
 import com.creativepool.models.PaginatedResponse;
 import com.creativepool.service.CloudStorageService;
+import com.creativepool.service.GCPResumableUpload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -40,6 +42,10 @@ public class FileController {
 
     @Autowired
     CloudStorageService cloudStorageService;
+
+    @Autowired
+    GCPResumableUpload gcpResumableUpload;
+
 
 
     //    @PostMapping("/result-upload")
@@ -77,11 +83,26 @@ public class FileController {
 //            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 //        }
 //    }
-    @PostMapping("/resumable")
-    public ResponseEntity<String> uploadFile(@RequestParam("objectName") String objectName) {
-        String signedUrl = cloudStorageService.generateSignedUrlForUpload(objectName);
-        String url = cloudStorageService.initiateResumableUpload(signedUrl);
+    @PostMapping("/result/resumable")
+    public ResponseEntity<String> uploadResultFile(@RequestParam("filename") String filename,@RequestParam("ticketId") UUID ticketId,@RequestParam("fileType") String fileType) throws IOException {
+        String url=null;
+        try {
+            url=cloudStorageService.resumableUpload(filename,fileType);
+            fileService.updateTicketResult(filename,ticketId,Status.PENDING);
+        } catch (Exception ex) {
+            throw new CreativePoolException(ex.getMessage());
+        }
         return new ResponseEntity<>(url, HttpStatus.OK);
+    }
+
+    @PostMapping("/resumable")
+    public ResponseEntity<String> uploadFile(@RequestParam("filename") String filename,@RequestParam("fileType") String fileType) throws IOException {
+        try {
+            String url = cloudStorageService.resumableUpload(filename, fileType);
+            return new ResponseEntity<>(url, HttpStatus.OK);
+        } catch (Exception ex) {
+            throw new CreativePoolException(ex.getMessage());
+        }
     }
 
     @GetMapping("/result/download-link")
@@ -92,8 +113,8 @@ public class FileController {
 
     @PostMapping("/update-result")
     public ResponseEntity<TicketResult> updateResult
-            (@RequestParam("filename") String filename,@RequestParam("ticketId") UUID ticketId) throws IOException {
-        TicketResult ticketResult = fileService.updateTicketResult(filename, ticketId);
+            (@RequestParam("filename") String filename,@RequestParam("ticketId") UUID ticketId,@RequestParam("status") Status status) throws IOException {
+        TicketResult ticketResult = fileService.updateTicketResult(filename, ticketId,status);
         return new ResponseEntity<>(ticketResult, HttpStatus.OK);
     }
 

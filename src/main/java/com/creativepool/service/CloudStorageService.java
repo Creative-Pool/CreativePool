@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -135,10 +136,15 @@ public class CloudStorageService {
         return signedUrl.toString();
     }
 
-    public String initiateResumableUpload(String signedUrl) {
-        // Create headers
+    public String resumableUpload(String filename,String fileType) throws URISyntaxException {
+
+        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, filename).build();
+        // Create the resumable upload session URL
+        URL uploadUrl = storage.signUrl(blobInfo, 1, TimeUnit.HOURS, Storage.SignUrlOption.httpMethod(HttpMethod.POST), Storage.SignUrlOption.withV4Signature(), Storage.SignUrlOption.withQueryParams(Map.of("uploadType", "resumable")), Storage.SignUrlOption.withExtHeaders(Map.of("x-goog-resumable", "start")));
+
+        // Open a connection to the resumable upload URL
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.set("Content-type", fileType);
         headers.set("x-goog-resumable", "start");
 
         // Create an empty request entity
@@ -146,9 +152,17 @@ public class CloudStorageService {
 
         // Use RestTemplate to make the POST request
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response =restTemplate.exchange(signedUrl, org.springframework.http.HttpMethod.POST, requestEntity, String.class);
-        return  response.getHeaders().getFirst(HttpHeaders.LOCATION);
+        ResponseEntity<String> response = restTemplate.exchange(uploadUrl.toURI(), org.springframework.http.HttpMethod.POST, requestEntity, String.class);
 
-     }
+
+        // Retrieve the resumable upload session URI from the response header
+        String uploadSessionUrl = response.getHeaders().getFirst(HttpHeaders.LOCATION);
+        if (uploadSessionUrl == null) {
+            throw new CreativePoolException("Could not retrieve the resumable upload session URL.");
+        }
+
+        return uploadSessionUrl;
+    }
+
 
 }

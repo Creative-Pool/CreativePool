@@ -2,6 +2,7 @@ package com.creativepool.service;
 
 
 import com.creativepool.constants.Errors;
+import com.creativepool.constants.Status;
 import com.creativepool.entity.TicketResult;
 import com.creativepool.exception.CreativePoolException;
 import com.creativepool.exception.ResourceNotFoundException;
@@ -10,6 +11,7 @@ import com.creativepool.repository.TicketResultRepository;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.*;
+import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -143,14 +145,27 @@ public class FileService {
 //    }
 
 
-    public TicketResult updateTicketResult(String filename,UUID ticketId) throws IOException {
+    public TicketResult updateTicketResult(String filename, UUID ticketId, Status status) throws IOException {
+        TicketResult ticketResult = null;
         try {
-            TicketResult ticketResult = new TicketResult();
-            ticketResult.setTicketId(ticketId);
-            ticketResult.setFilename(filename);
-            ticketResult.setLastUpload(new Date());
-            return ticketResultRepository.saveAndFlush(ticketResult);
-        }catch (Exception ex){
+            if (status.equals(Status.FAILURE)) {
+                ticketResultRepository.deleteTicketResult(ticketId, status, filename);
+            } else {
+                ticketResult = ticketResultRepository.findByFileName(filename);
+
+                if (!ObjectUtils.isEmpty(ticketResult)) {
+                    ticketResult.setStatus(Status.SUCCESS);
+                } else {
+                    ticketResult = new TicketResult();
+                    ticketResult.setTicketId(ticketId);
+                    ticketResult.setFilename(filename);
+                    ticketResult.setLastUpload(new Date());
+                    ticketResult.setStatus(status);
+                    ticketResultRepository.saveAndFlush(ticketResult);
+                }
+            }
+            return ticketResult;
+        } catch (Exception ex) {
             logger.error(ex.getMessage());
             throw new CreativePoolException(Errors.E00013.getMessage());
         }

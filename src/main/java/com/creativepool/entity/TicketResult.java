@@ -1,4 +1,5 @@
 package com.creativepool.entity;
+import com.creativepool.constants.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,4 +27,7 @@ public class TicketResult {
 
     @Column(name = "last_upload")
     private Date lastUpload;
+
+    @Column(name = "status")
+    private Status status;
 }
