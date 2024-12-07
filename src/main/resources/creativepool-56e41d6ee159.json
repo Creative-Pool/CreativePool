@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "creativepool",
+  "private_key_id": "56e41d6ee159eb2da5e716c622759172b45afb66",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEugIBADANBgkqhkiG9w0BAQEFAASCBKQwggSgAgEAAoIBAQCtO6vf822GdYOq\nTrBcUHLNtwUDxBbwV4pDnoJWAHnm+C9Kp5kCDYnvD3xJqtMWMmhBHC4+s1nnEuVJ\nqoO9nL/XwGMwF5eiCeUGpW68w0hbkaefrL7DM1ISSKuwBuunn2toAfsi0Qhd67Mb\nVRKmykOGuJtFMfOBJQLRB1iH7tx+Voa5NCe/uvU8XeqXjwhOJ2773eza1OBFv5KJ\nBJcPbAIL/JjOH/R/OE2q8jkyddtv240TkDO6MHaDelkxTPjwf0KvqOBYJyGUxTIB\ncTPbBS4/HFjLi9/Kiqm2gvEpshV1rwnf/gCCwujQQHPZYruIwPSNjx+uwxN14ZrY\n0xu58EY5AgMBAAECgf9WaOjXdgewha2i7yaAU2nMBYyj9ELYX/bBA/ktLPQzz30Q\noBIkytwQgxs3bPmwVDR+/K+UoDQqU7TdzplxW1761pM1pWpv25sUejCrt6rkuP5N\nGeJpO/3vqf3VVML3gwAU+DEj1fMtU+AaRrU5T4+fTO0miRro+YigaU4yEkFg1P7B\nC4kOPNYvWT52qlqqW84aKh8M/hAg6s+f/CMuOn0Adl819ATI42hxq76GK78wwHM0\nzDoFuwGmFT9EynMGfuWP1eEy5UWnSPK+C6Ho6JEQsg97IGtuElkqISr1+khyfnWM\nyPumBd+wRFezexVihC/GpFSF8jAqAaMV0xLOb1ECgYEA4pF7pOqxNwXfhmrjwpbX\nTaQhSdjjXt3iCB5/jMMIbO8gLGMok1sN3+nvVkqDLNwiK7zrnMO6qkyuyXb2fuY9\nth/1fKU6d8KuH1d2ec1z+anW+Ng0DDEQiSwLK5oB2BoT3bLgrEq+vJJvdlo0fYsG\nMfdaVInXTC8aj5EKc1NjbZECgYEAw7yHbEF/z1Y78n6wAVs9kt5wQjRfCapZKz+4\nGdNexN9ioyE/l4I3t7qfxldYocCnqhhSK9qokyRAOZHzqdestYH0KPSQt8Fvwise\nq2S6UHOquI7EGoL6DXOi9Zn+S1OtHdcQlwu4hSwZmaUyCf5jciH84JQ9XuFKZWsE\nBFIzGikCgYBxUSYwI5mi1XMofYmQp3TjxjVIBAwkRIFqYiaVNm6eXTMQQD/pA197\nIDuuQvI8m5UTnxeQfmx8BIJfDPrYGTvAPVfAkbsebuY7krkUzmc09XcpWqkdd+S3\nVqn3kr1dYh2RgofQZEnlcrAA17jtGX1tvDMXmSFvXxe/umEpsQlHoQKBgBQyHZ7z\n2yYfdav9mldpfJ7syJRsJuouY2js+CfiAUM68Uh3o8IUM3+Hh/jFBmYaJLKOM9xG\ngWI9OUs3XfbGRBGuSOz43v22vbtBC7cPe5HVfWXxhRZfMUG2DrhcnTpUdeZATHvp\nP66t8C5ENzeEweoCy764TOS/RhfUxONVP+SRAoGAfsQhW0HGOOYjkMZ3Ap3SjKSq\nQ31VMgGm519FMHJy9flSrREkkUc3RY66d60wPQhcrXN2c3+42fokxAu8nGWQHqZ8\n4hcp4IvYZcy0CkOovYh5ysgfxADNhT9mi8iHMrPthZ/Raa4BG5QsCcoiKRQ9wlGu\nO4HuZyglBw/n6aVrSZw=\n-----END PRIVATE KEY-----\n",
+  "client_email": "creative-pool@creativepool.iam.gserviceaccount.com",
+  "client_id": "105905553744519084012",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/creative-pool%40creativepool.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
