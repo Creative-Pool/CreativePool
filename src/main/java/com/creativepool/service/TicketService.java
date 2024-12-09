@@ -68,12 +68,7 @@ public class TicketService {
             ticket.setClientId(ticketDTO.getClientId());
             ticket.setTicketStatus(TicketStatus.OPEN); // or any default status
             ticket.setTicketComplexity(ticketDTO.getTicketComplexity());
-            if (multipartFiles != null && !multipartFiles.isEmpty()) {
-                for (MultipartFile file : multipartFiles) {
-                    cloudStorageService.uploadFile(file, filenames);
-                }
-            }
-            ticket.setFilename(String.join(",", filenames));
+            ticket.setFilename(ticketDTO.getFilenames());
             Ticket savedTicket = ticketRepository.save(ticket);
             logger.info("Action to create ticket completed {}", savedTicket);
             return mapToResponseDTO(savedTicket);
@@ -315,25 +310,25 @@ public class TicketService {
             Ticket ticket = ticketRepository.findById(ticketDTO.getTicketId()).orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id " + ticketDTO.getTicketId()));
 
             // Get current images
-            List<String> currentImages = new ArrayList<>(Arrays.asList(ticket.getFilename().split(",")));
-
-            // Delete specified images
-            if (ticketDTO.getDeleteUrls() != null && !ticketDTO.getDeleteUrls().isEmpty()) {
-                for (String url : ticketDTO.getDeleteUrls()) {
-                    String filename = cloudStorageService.getFilenameFromSignedUrl(url);
-                    cloudStorageService.deleteFileUsingSignedUrl(url);
-                    currentImages.remove(filename);
-                }
-            }
-
-            // Add new images
-            if (files != null && !files.isEmpty()) {
-                List<String> newUploadedUrls = new ArrayList<>();
-                for (MultipartFile file : files) {
-                    cloudStorageService.uploadFile(file, newUploadedUrls);
-                }
-                currentImages.addAll(newUploadedUrls);
-            }
+//            List<String> currentImages = new ArrayList<>(Arrays.asList(ticket.getFilename().split(",")));
+//
+//            // Delete specified images
+//            if (ticketDTO.getDeleteUrls() != null && !ticketDTO.getDeleteUrls().isEmpty()) {
+//                for (String url : ticketDTO.getDeleteUrls()) {
+//                    String filename = cloudStorageService.getFilenameFromSignedUrl(url);
+//                    cloudStorageService.deleteFileUsingSignedUrl(url);
+//                    currentImages.remove(filename);
+//                }
+//            }
+//
+//            // Add new images
+//            if (files != null && !files.isEmpty()) {
+//                List<String> newUploadedUrls = new ArrayList<>();
+//                for (MultipartFile file : files) {
+//                    cloudStorageService.uploadFile(file, newUploadedUrls);
+//                }
+//                currentImages.addAll(newUploadedUrls);
+//            }
 
             // Update ticket details
             ticket.setTitle(getOrDefault(ticketDTO.getTitle(), ticket.getTitle()));
@@ -345,7 +340,7 @@ public class TicketService {
             ticket.setClientId(getOrDefault(ticketDTO.getClientId(), ticket.getClientId()));
             ticket.setTicketStatus(getOrDefault(ticketDTO.getTicketStatus(), ticket.getTicketStatus()));
             ticket.setTicketComplexity(getOrDefault(ticketDTO.getTicketComplexity(), ticket.getTicketComplexity()));
-            ticket.setFilename(currentImages.stream().collect(Collectors.joining(",")));
+            ticket.setFilename(ticketDTO.getFilenames());
 
             Ticket updatedTicket = ticketRepository.save(ticket);
             logger.info("Ticket updated successfully with ID: {}", updatedTicket.getTicketID());

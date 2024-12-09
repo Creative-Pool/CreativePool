@@ -19,7 +19,7 @@ public class TicketDTO {
     private String reporterName;
     private Double price;
     private Date ticketDeadline;
-    private String images;
+    private String filenames;
     private String url;
     private UUID clientId;
     private String ticketComplexity;
