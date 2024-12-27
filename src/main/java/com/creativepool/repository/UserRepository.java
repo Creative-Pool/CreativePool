@@ -36,6 +36,9 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
             @Param("page") int page,
             @Param("size") int size);
 
+   @Query(value="select ac.email from public.account ac left join public.freelancer f on ac.user_id=f.user_id left join public.client c on ac.user_id=c.user_id where f.freelancer_id=:freelancerId or c.client_id=:clientId",nativeQuery = true)
+   public List<String> findEmailsByClientIdOrFreelancerId(UUID clientId,UUID freelancerId);
+
 
 
 

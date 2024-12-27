@@ -22,6 +22,8 @@ public class TicketSearchResponse {
     private UUID clientId;
     private String assignee;
     private Double rating;
-    private String complexity;
+    private String ticketComplexity;
+    private String meetingUrl;
+
 
 }

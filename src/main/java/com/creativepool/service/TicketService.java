@@ -52,6 +52,12 @@ public class TicketService {
     @Autowired
     FreelancerReachOutRepository freelancerReachOutRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    GoogleMeetService googleMeetService;
+
     public TicketResponseDTO createTicket(TicketDTO ticketDTO, List<MultipartFile> multipartFiles) throws IOException {
         try {
             logger.info("Action to create ticket started {}", ticketDTO);
@@ -116,6 +122,7 @@ public class TicketService {
         responseDTO.setTicketComplexity(ticket.getTicketComplexity());
         responseDTO.setTicketBudget(ticket.getBudget());
         responseDTO.setAssignee(ticket.getAssignee());
+        responseDTO.setMeetingUrl(ticket.getMeetingUrl());
         if(!StringUtils.isEmpty(ticket.getFilename())) {
             String[] files = ticket.getFilename().split(",");
             for (String file : files) {
@@ -137,7 +144,8 @@ public class TicketService {
 
             String firstname = (String) freelancerDetail[0];
             String lastname = (String) freelancerDetail[1];
-            Integer totalAssignedTickets = (Integer) freelancerDetail[2];
+            Integer totalAssignedTickets = freelancerDetail[2] != null ? (Integer) freelancerDetail[2] : 0;
+
             logger.debug("Freelancer details: {} {}, total tickets assigned: {}", firstname, lastname, totalAssignedTickets);
 
 
@@ -146,8 +154,15 @@ public class TicketService {
                 throw new IllegalStateException(Errors.E00008.getMessage());
             }
             freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, freelancerId);
+
+            List<String> attendeeEmails=userRepository.findEmailsByClientIdOrFreelancerId(ticket.getClientId(),freelancerId);
+
+            String meetingUrl= googleMeetService.createInstantMeeting(attendeeEmails);
+
             ticket.setFreelancerId(freelancerId);
+            ticket.setMeetingUrl(meetingUrl);
             ticket.setAssignee(firstname + " " + lastname);
+            ticket.setTicketStatus(TicketStatus.IN_PROGRESS);
             Ticket savedTicket = ticketRepository.save(ticket);
             logger.info("Ticket '{}' assigned to freelancer '{}'", ticketId, freelancerId);
 
@@ -210,7 +225,7 @@ public class TicketService {
                 List<TicketSearchResponse> responses = convertToResponse(result, UserType.CLIENT);
 
 
-                long totalRowCount = (long) result.get(0)[15];
+                long totalRowCount = (long) result.get(0)[16];
                 boolean isLastPage = ((long) (page + 1) * size >= totalRowCount);
                 Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
 
@@ -295,9 +310,11 @@ public class TicketService {
             response.setFreelancerId((UUID) Utils.getOrDefault((UUID) row[10], response.getFreelancerId()));
             response.setClientId((UUID) Utils.getOrDefault((UUID) row[11], response.getClientId()));
             response.setAssignee((String) Utils.getOrDefault((String) row[12], response.getAssignee()));
-            response.setComplexity((String) Utils.getOrDefault((String) row[13], response.getComplexity()));
+            response.setTicketComplexity(((String) Utils.getOrDefault((String) row[13], response.getTicketComplexity())));
+            response.setMeetingUrl(((String) Utils.getOrDefault((String) row[14], response.getMeetingUrl())));
+
             if(userType.equals(UserType.CLIENT))
-                 response.setRating((Double) Utils.getOrDefault(row[14] != null ? ((BigDecimal) row[14]).doubleValue() : null, response.getRating()));
+                 response.setRating((Double) Utils.getOrDefault(row[15] != null ? ((BigDecimal) row[15]).doubleValue() : null, response.getRating()));
             responses.add(response);
         }
         }
@@ -611,6 +628,43 @@ public class TicketService {
         } catch (Exception e) {
             logger.error("Unexpected error during deletion of client request: ticketId={}, freelancerId={}. Error: {}", ticketId, freelancerId, e.getMessage(), e);
             throw new CreativePoolException(Errors.E00025.getMessage());
+        }
+    }
+
+    public void markTicketAsClosed(UUID ticketId) {
+        try {
+            logger.info("Attempting to mark ticket with ID {} as closed.", ticketId);
+            Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
+
+            if (ticketOpt.isPresent()) {
+                Ticket ticket = ticketOpt.get();
+                ticket.setTicketStatus(TicketStatus.CLOSED); // Assuming `status` is an enum
+                ticketRepository.save(ticket);
+                logger.info("Ticket with ID {} marked as closed successfully.", ticketId);
+
+            }
+        } catch (Exception e) {
+            logger.error("An error occurred while marking ticket with ID {} as closed: {}", ticketId, e.getMessage(), e);
+            throw new CreativePoolException("Unable to close ticket");
+        }
+    }
+
+    public void backoffFromTicket(UUID ticketId) {
+        try {
+            logger.info("Attempting to back off freelancer  from ticket with ID {}.", ticketId);
+            Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
+
+            if (ticketOpt.isPresent()) {
+                Ticket ticket = ticketOpt.get();
+                ticket.setTicketStatus(TicketStatus.OPEN); // Assuming `status` is an enum
+                ticket.setFreelancerId(null); // Assuming `freelancerId` is a field in the Ticket entity
+                ticketRepository.save(ticket);
+                logger.info("successfully backed off from ticket with ID {}.", ticketId);
+
+            }
+        } catch (Exception e) {
+            logger.error("An error occurred while backing off  from ticket with ID {}: {}", ticketId, e.getMessage(), e);
+            throw new CreativePoolException("Unable to unassign from the ticket");
         }
     }
 

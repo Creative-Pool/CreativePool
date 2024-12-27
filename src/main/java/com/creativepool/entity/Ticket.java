@@ -62,4 +62,7 @@ public class Ticket {
     @Column(name="assignee")
     private String assignee;
 
+    @Column(name="meeting_url")
+    private String meetingUrl;
+
 }

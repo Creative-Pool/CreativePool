@@ -24,4 +24,5 @@ public class TicketResponseDTO {
     private String ticketComplexity;
     private Double ticketBudget;
     private String assignee;
+    private String meetingUrl;
 }

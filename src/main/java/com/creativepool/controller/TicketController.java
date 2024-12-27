@@ -2,15 +2,12 @@ package com.creativepool.controller;
 
 import com.creativepool.entity.ClientReachOut;
 import com.creativepool.entity.FreelancerReachOut;
-import com.creativepool.entity.UserType;
 import com.creativepool.models.*;
 import com.creativepool.service.CloudStorageService;
 import com.creativepool.service.TicketService;
-import jdk.jfr.ContentType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -164,6 +160,25 @@ public class TicketController {
         ticketService.rejectClientRequest(ticketId,freelancerId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+
+    @PutMapping("/ticket/close")
+    public ResponseEntity<Void> closeTicket(@RequestParam UUID ticketId) {
+        ticketService.markTicketAsClosed(ticketId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @DeleteMapping("/freelancer/backoff")
+    public ResponseEntity<Void> backoffFromTicket(@RequestParam UUID ticketId) {
+        ticketService.backoffFromTicket(ticketId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+
+    }
+
+
+
+
+
 
 
 //    @GetMapping("/sign-url")
