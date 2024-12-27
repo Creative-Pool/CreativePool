@@ -589,6 +589,7 @@ public class TicketService {
                     dto.setClientId(array[11] != null ? (UUID) array[11] : null);
                     dto.setTicketComplexity(array[12] != null ? (String) array[12] : null);
                     dto.setTicketBudget(array[13] != null ? ((BigDecimal) array[13]).doubleValue() : null);
+                    dto.setMeetingUrl(((String) Utils.getOrDefault((String) array[15], dto.getMeetingUrl())));
 
                     ticketResponseDTOS.add(dto);
                 }
