@@ -2,6 +2,7 @@ package com.creativepool.service;
 
 
 import com.creativepool.constants.Errors;
+import com.creativepool.constants.ReachOutStatus;
 import com.creativepool.entity.*;
 import com.creativepool.exception.BadRequestException;
 import com.creativepool.exception.CreativePoolException;
@@ -9,7 +10,6 @@ import com.creativepool.exception.ResourceNotFoundException;
 import com.creativepool.models.*;
 import com.creativepool.repository.*;
 import com.creativepool.utils.Utils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -153,6 +153,9 @@ public class TicketService {
             if (totalAssignedTickets > 5) {
                 throw new IllegalStateException(Errors.E00008.getMessage());
             }
+
+            freelancerReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.APPROVED.ordinal());
+
             freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, freelancerId);
 
             List<String> attendeeEmails=userRepository.findEmailsByClientIdOrFreelancerId(ticket.getClientId(),freelancerId);
@@ -394,7 +397,16 @@ public class TicketService {
         logger.info("Attempting to create a new FreelancerReachOut entry with Freelancer ID: {} and Ticket ID: {}",
                 freelancerReachOut.getFreelancerId(), freelancerReachOut.getTicketId());
         try {
-            FreelancerReachOut savedFreelancerReachOut = freelancerReachOutRepository.save(freelancerReachOut);
+           Optional<FreelancerReachOut> optionalFreelancerReachOut= freelancerReachOutRepository.findByTicketIdAndFreelancerId(freelancerReachOut.getTicketId(),freelancerReachOut.getFreelancerId());
+            FreelancerReachOut savedFreelancerReachOut=null;
+           if(optionalFreelancerReachOut.isPresent()){
+                FreelancerReachOut existingFreelancerReachOut=optionalFreelancerReachOut.get();
+                existingFreelancerReachOut.setReachOutStatus(ReachOutStatus.APPLIED);
+                savedFreelancerReachOut = freelancerReachOutRepository.save(existingFreelancerReachOut);
+           }else {
+               freelancerReachOut.setReachOutStatus(ReachOutStatus.APPLIED);
+               savedFreelancerReachOut = freelancerReachOutRepository.save(freelancerReachOut);
+           }
             logger.info("Successfully created FreelancerReachOut entry with ID: {}", savedFreelancerReachOut.getId());
             return savedFreelancerReachOut;
         } catch (Exception e) {
@@ -409,6 +421,7 @@ public class TicketService {
         logger.info("Attempting to create a new ClientReachOut entry with Client ID: {} and Ticket ID: {}",
                 clientReachOut.getClientId(), clientReachOut.getTicketId());
         try {
+            clientReachOut.setReachOutStatus(ReachOutStatus.REQUESTED);
             ClientReachOut savedClientReachOut = clientReachOutRepository.save(clientReachOut);
             logger.info("Successfully created ClientReachOut entry with ID: {}", savedClientReachOut.getId());
             return savedClientReachOut;
@@ -426,7 +439,7 @@ public class TicketService {
         }
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> tickets = clientReachOutRepository.getClientReachOutTickets(freelancerId, pageable);
+        Page<Object[]> tickets = clientReachOutRepository.getClientReachOutTickets(freelancerId,ReachOutStatus.REQUESTED, pageable);
         List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
         List<Ticket> ticketsList = new ArrayList<>();
         try {
@@ -520,7 +533,7 @@ public class TicketService {
 
         Pageable pageable = PageRequest.of(page, size);
         try {
-            Page<Object[]> freelancerDetails = clientReachOutRepository.getFreelancersName(ticketId, pageable);
+            Page<Object[]> freelancerDetails = clientReachOutRepository.getFreelancersName(ticketId, pageable,ReachOutStatus.REQUESTED);
             List<Profile> profiles = new ArrayList<>();
             List<Ticket> ticketsList = new ArrayList<>();
 
@@ -547,7 +560,7 @@ public class TicketService {
     }
 
 
-    public PaginatedResponse<TicketResponseDTO> fetchTicketsAppliedByFreelancers(UUID freelancerId,Integer page,Integer size) {
+    public PaginatedResponse<TicketResponseDTO> fetchTicketsAppliedByFreelancers(UUID freelancerId,ReachOutStatus reachOutStatus,Integer page,Integer size) {
         logger.info("Fetching tickets applied by freelancer with ID: {} for page: {} and size: {}", freelancerId, page, size);
 
         if (page == null || size == null) {
@@ -556,7 +569,7 @@ public class TicketService {
 
         Pageable pageable = PageRequest.of(page, size);
         try {
-            Page<Object[]> tickets = freelancerReachOutRepository.getTicketsAppliedByFreelancer(freelancerId, pageable);
+            Page<Object[]> tickets = freelancerReachOutRepository.getTicketsAppliedByFreelancer(freelancerId, pageable,reachOutStatus.ordinal());
             List<TicketResponseDTO> ticketResponseDTOS = new ArrayList<>();
             List<Ticket> ticketsList = new ArrayList<>();
 
@@ -611,9 +624,9 @@ public class TicketService {
 
     public void rejectFreelancerRequest(UUID ticketId,UUID freelancerId) {
         try {
-            logger.info("Deletion of request started tickerId {}, freelancerId{}", ticketId, freelancerId);
-            freelancerReachOutRepository.deleteAppliedTicket(ticketId, freelancerId);
-            logger.info("Deletion of request completed tickerId {}, freelancerId{}", ticketId, freelancerId);
+            logger.info("Rejection of request started tickerId {}, freelancerId{}", ticketId, freelancerId);
+            freelancerReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.REJECTED.ordinal());
+            logger.info("Rejection of request completed tickerId {}, freelancerId{}", ticketId, freelancerId);
         } catch (Exception e) {
             logger.error("Unexpected error during deletion of freelancer request: ticketId={}, freelancerId={}. Error: {}", ticketId, freelancerId, e.getMessage(), e);
             throw new CreativePoolException(Errors.E00024.getMessage());
@@ -623,7 +636,7 @@ public class TicketService {
     public void rejectClientRequest(UUID ticketId,UUID freelancerId) {
         logger.info("Deletion of request started tickerId {}, freelancerId {}", ticketId, freelancerId);
         try {
-            clientReachOutRepository.deleteAppliedTicket(ticketId, freelancerId);
+            clientReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.REJECTED.ordinal());
             logger.info("Deletion of request completed tickerId {}, freelancerId {}", ticketId, freelancerId);
         } catch (Exception e) {
             logger.error("Unexpected error during deletion of client request: ticketId={}, freelancerId={}. Error: {}", ticketId, freelancerId, e.getMessage(), e);
@@ -636,10 +649,29 @@ public class TicketService {
             logger.info("Attempting to mark ticket with ID {} as closed.", ticketId);
             Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
 
+
             if (ticketOpt.isPresent()) {
                 Ticket ticket = ticketOpt.get();
+
+                if (ticket.getTicketStatus().equals(TicketStatus.CLOSED)) {
+                    logger.error("Ticket Already closed");
+                    throw new BadRequestException(Errors.E00027.getMessage());
+                }
+
+                Optional<Freelancer> optionalFreelancer = freelancerRepository.findById(ticket.getFreelancerId());
+                Freelancer freelancer = null;
+                if (optionalFreelancer.isPresent()) freelancer = optionalFreelancer.get();
+                Integer totalAssignedTickets = freelancer.getTotalAssignedTickets();
+
+                if (totalAssignedTickets != null && totalAssignedTickets != 0) {
+                    totalAssignedTickets = totalAssignedTickets - 1;
+                } else {
+                    totalAssignedTickets = 0;
+                }
+
                 ticket.setTicketStatus(TicketStatus.CLOSED); // Assuming `status` is an enum
                 ticketRepository.save(ticket);
+                freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, ticket.getFreelancerId());
                 logger.info("Ticket with ID {} marked as closed successfully.", ticketId);
 
             }
@@ -653,14 +685,27 @@ public class TicketService {
         try {
             logger.info("Attempting to back off freelancer  from ticket with ID {}.", ticketId);
             Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
-
+            UUID freelancerId=null;
             if (ticketOpt.isPresent()) {
                 Ticket ticket = ticketOpt.get();
+                Freelancer freelancer=null;
+                freelancerId=ticket.getFreelancerId();
+                Optional<Freelancer> optionalFreelancer=freelancerRepository.findById(freelancerId);
+
                 ticket.setTicketStatus(TicketStatus.OPEN); // Assuming `status` is an enum
                 ticket.setFreelancerId(null); // Assuming `freelancerId` is a field in the Ticket entity
-                ticketRepository.save(ticket);
-                logger.info("successfully backed off from ticket with ID {}.", ticketId);
+                ticket.setAssignee(null);
 
+                if(optionalFreelancer.isPresent())
+                    freelancer=optionalFreelancer.get();
+                Integer totalAssignedTickets=freelancer.getTotalAssignedTickets();
+                totalAssignedTickets= (totalAssignedTickets==null || totalAssignedTickets==0)?0:totalAssignedTickets--;
+
+                ticketRepository.save(ticket);
+                freelancerReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.WITHDRAW.ordinal());
+                freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, freelancerId);
+
+                logger.info("successfully backed off from ticket with ID {}.", ticketId);
             }
         } catch (Exception e) {
             logger.error("An error occurred while backing off  from ticket with ID {}: {}", ticketId, e.getMessage(), e);

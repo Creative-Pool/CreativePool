@@ -1,6 +1,7 @@
 package com.creativepool.entity;
 
 
+import com.creativepool.constants.ReachOutStatus;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -30,4 +31,9 @@ public class ClientReachOut {
 
     @Column(name = "reached_out_at")
     private LocalDateTime reachedOutAt = LocalDateTime.now();
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "reach_out_status")
+    private ReachOutStatus reachOutStatus;
+
 }

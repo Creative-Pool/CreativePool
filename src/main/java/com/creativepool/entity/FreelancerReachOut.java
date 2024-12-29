@@ -1,5 +1,6 @@
 package com.creativepool.entity;
 
+import com.creativepool.constants.ReachOutStatus;
 import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,4 +31,10 @@ public class FreelancerReachOut {
 
     @Column(name = "reached_out_at")
     private LocalDateTime reachedOutAt = LocalDateTime.now();
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "reach_out_status")
+    private ReachOutStatus reachOutStatus;
+
+
 }

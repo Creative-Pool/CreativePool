@@ -43,4 +43,5 @@ public interface FreelancerRepository extends JpaRepository<Freelancer, UUID> {
 
     public Optional<Freelancer> findByUserID(UUID userId);
 
+
 }

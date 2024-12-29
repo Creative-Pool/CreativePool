@@ -1,5 +1,6 @@
 package com.creativepool.controller;
 
+import com.creativepool.constants.ReachOutStatus;
 import com.creativepool.entity.ClientReachOut;
 import com.creativepool.entity.FreelancerReachOut;
 import com.creativepool.models.*;
@@ -136,9 +137,9 @@ public class TicketController {
 
     //done
     @GetMapping("/ticket/freelancer-applied")
-    public ResponseEntity<PaginatedResponse<TicketResponseDTO> > fetchTicketsAppliedByFreelancers(@RequestParam(name = "freelancerId") UUID freelancerId,@RequestParam(name = "page") Integer page,@RequestParam(name = "size") Integer size) throws IOException {
+    public ResponseEntity<PaginatedResponse<TicketResponseDTO> > fetchTicketsAppliedByFreelancers(@RequestParam(name = "freelancerId") UUID freelancerId, @RequestParam(name = "reachOutStatus") ReachOutStatus reachOutStatus, @RequestParam(name = "page") Integer page, @RequestParam(name = "size") Integer size) throws IOException {
         log.info("xoo:{},{},{}", freelancerId,page,size);
-        PaginatedResponse<TicketResponseDTO> xoxo = ticketService.fetchTicketsAppliedByFreelancers(freelancerId,page,size);
+        PaginatedResponse<TicketResponseDTO> xoxo = ticketService.fetchTicketsAppliedByFreelancers(freelancerId,reachOutStatus,page,size);
         log.info("xoox:{}", xoxo);
         return new ResponseEntity<>(xoxo,HttpStatus.OK);
     }
