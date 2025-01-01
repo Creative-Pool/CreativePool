@@ -7,6 +7,7 @@ import com.creativepool.exception.CreativePoolException;
 import com.creativepool.exception.ResourceNotFoundException;
 import com.creativepool.models.*;
 import com.creativepool.repository.ClientRepository;
+import com.creativepool.repository.FcmTokenRepository;
 import com.creativepool.repository.FreelancerRepository;
 import com.creativepool.repository.UserRepository;
 import com.creativepool.utils.Utils;
@@ -67,10 +68,13 @@ public class UserService {
     @Autowired
     CloudStorageService cloudStorageService;
 
-    Logger logger= LoggerFactory.getLogger(UserService.class);
+    @Autowired
+    private FcmTokenRepository fcmTokenRepository;
+
+    Logger logger = LoggerFactory.getLogger(UserService.class);
 
     public List<Profile> createUser(User user) {
-        logger.info("Action to create user started {}",user);
+        logger.info("Action to create user started {}", user);
         List<Profile> profiles = new ArrayList<>();
         try {
             if (ObjectUtils.isEmpty(user))
@@ -79,8 +83,8 @@ public class UserService {
             if (!ObjectUtils.isEmpty(userEntity))
                 throw new BadRequestException(Errors.E00003.getMessage());
 
-            UUID clientId=null;
-            UUID freelancerId=null;
+            UUID clientId = null;
+            UUID freelancerId = null;
             userEntity = new UserEntity();
             userEntity.setUserID(UUID.randomUUID());
             userEntity.setUsername(user.getUsername());
@@ -95,38 +99,38 @@ public class UserService {
             userEntity.setPhone(user.getPhone());
             UserEntity userEntity1 = userRepository.save(userEntity);
 
-            if(user.getUserType().equals(UserType.CLIENT)){
-                Client client=new Client();
+            if (user.getUserType().equals(UserType.CLIENT)) {
+                Client client = new Client();
                 client.setClientID(UUID.randomUUID());
                 client.setUserID(userEntity.getUserID());
                 clientRepository.save(client);
-                clientId=client.getClientID();
-            }else{
-                Freelancer freelancer=new Freelancer();
+                clientId = client.getClientID();
+            } else {
+                Freelancer freelancer = new Freelancer();
                 freelancer.setId(UUID.randomUUID());
                 freelancer.setUserID(userEntity.getUserID());
                 freelancerRepository.save(freelancer);
-                freelancerId=freelancer.getId();
+                freelancerId = freelancer.getId();
             }
-            Profile profile=toProfile(userEntity,clientId,freelancerId);
+            Profile profile = toProfile(userEntity, clientId, freelancerId);
             profiles.add(profile);
         } catch (DataIntegrityViolationException e) {
-            logger.error(e.getMessage(),e);
+            logger.error(e.getMessage(), e);
             if (e.getMessage().contains("account_email_key"))
                 throw new DataIntegrityViolationException(Errors.E00006.getMessage());
             if (e.getMessage().contains("account_phone_key"))
                 throw new DataIntegrityViolationException(Errors.E00007.getMessage());
-        }catch (BadRequestException ex){
-            logger.error(ex.getMessage(),ex);
+        } catch (BadRequestException ex) {
+            logger.error(ex.getMessage(), ex);
             throw new BadRequestException(ex.getMessage());
-        }catch (Exception ex){
-            logger.error(ex.getMessage(),ex);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             throw new CreativePoolException(Errors.E00013.getMessage());
         }
         return profiles;
     }
 
-    private  Profile toProfile(UserEntity userEntity,UUID clientId,UUID freelancerId) {
+    private Profile toProfile(UserEntity userEntity, UUID clientId, UUID freelancerId) {
         if (userEntity == null) {
             return null;
         }
@@ -150,7 +154,7 @@ public class UserService {
 
     public void createProfile(Profile profile, MultipartFile file) {
         try {
-            logger.info("Action to create profile started {}",profile);
+            logger.info("Action to create profile started {}", profile);
             switch (profile.getUserType().toString()) {
                 case "FREELANCER":
                     createFreelancerProfile(profile, file);
@@ -243,6 +247,7 @@ public class UserService {
 
     private List<Profile> getFreelancerProfile(String phoneNo, UserType userType) throws IOException {
         logger.info("Fetching freelancer profile for phone number: {}", phoneNo);
+
         List<Profile> profiles = new ArrayList<>();
         List<WorkHistory> workHistoryList = new ArrayList<>();
         List<Object[]> freelancerObjectArray = freelancerRepository.findFreelancerByPhoneNo(phoneNo, userType.ordinal());
@@ -304,6 +309,7 @@ public class UserService {
                 profile.setWorkHistory(workHistoryList);
                 profile.setFreelancerId(row[15] != null ? (UUID) row[15] : null);
             }
+            profile.setFcmToken(row[16] != null ? (String) row[16] : null);
             profiles.add(profile);
         }
         return profiles;
@@ -353,16 +359,16 @@ public class UserService {
 
             profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
             profile.setClientId(row[12] != null ? (UUID) row[12] : null);
+            profile.setFcmToken(row[13] != null ? (String) row[13] : null);
             profiles.add(profile);
         }
         return profiles;
     }
 
 
-
     public PaginatedResponse<Profile> searchFreelancer(UserSearchRequest userSearchRequest) throws IOException {
         try {
-            logger.info("Action to search freelancer started {}",userSearchRequest);
+            logger.info("Action to search freelancer started {}", userSearchRequest);
             // Validate pagination parameters
             Integer page = userSearchRequest.getPage();
             Integer size = userSearchRequest.getSize();
@@ -398,11 +404,11 @@ public class UserService {
             Integer totalPages = (int) Math.ceil((double) totalRowCount / size);
             logger.info("Action to search freelancer completed");
             return new PaginatedResponse<>(totalRowCount, profiles, isLastPage, page + 1, totalPages);
-        }catch(BadRequestException ex){
-            logger.error(ex.getMessage(),ex);
+        } catch (BadRequestException ex) {
+            logger.error(ex.getMessage(), ex);
             throw new BadRequestException(ex.getMessage());
-        }catch (Exception ex){
-            logger.error(ex.getMessage(),ex);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             throw new CreativePoolException(Errors.E00013.getMessage());
         }
 
@@ -429,7 +435,7 @@ public class UserService {
         profile.setEmail(Utils.getOrDefault((String) row[4], profile.getEmail()));
 
 
-        profile.setProfileImage(Utils.getOrDefault(row[5] != null ? cloudStorageService.generateSignedUrl((String) row[5] ): null, profile.getProfileImage()));
+        profile.setProfileImage(Utils.getOrDefault(row[5] != null ? cloudStorageService.generateSignedUrl((String) row[5]) : null, profile.getProfileImage()));
         profile.setDateOfBirth(Utils.getOrDefault((Date) row[6], profile.getDateOfBirth()));
         profile.setGender(Utils.getOrDefault(row[7] != null ? Gender.values()[(Integer) row[7]] : null, profile.getGender()));
         profile.setCity(Utils.getOrDefault((String) row[8], profile.getCity()));
@@ -455,7 +461,7 @@ public class UserService {
                     throw new ResourceNotFoundException("User type not found");
             }
         } catch (ResourceNotFoundException | IOException e) {
-            logger.error(e.getMessage(),e);
+            logger.error(e.getMessage(), e);
             throw new ResourceNotFoundException(e.getMessage()); // Assume E00006 is an edit-specific error message
         }
     }
@@ -498,7 +504,7 @@ public class UserService {
     }
 
     private void editClientProfile(Profile profile, MultipartFile file) throws IOException {
-      log.info("Action to edit the client started {}",profile);
+        log.info("Action to edit the client started {}", profile);
         Optional<UserEntity> optionalUserEntity = userRepository.findById(profile.getUserID());
         if (optionalUserEntity.isPresent()) {
             UserEntity userEntity = optionalUserEntity.get();
@@ -532,6 +538,66 @@ public class UserService {
         }
     }
 
+
+    public String upsertFcmToken(FcmTokenRequest fcmTokenRequest) {
+
+        try {
+
+            if (fcmTokenRequest == null || fcmTokenRequest.getDeviceId() == null || fcmTokenRequest.getFcmToken() == null) {
+                throw new IllegalArgumentException("Device ID or FCM Token is missing.");
+            }
+
+            logger.info("Processing FCM token for device: {}, user: {}", fcmTokenRequest.getDeviceId(), fcmTokenRequest.getUserId());
+
+            // Check if a record with the given deviceId already exists
+            FcmToken existingToken = fcmTokenRepository.findByUserIdAndDeviceId(fcmTokenRequest.getUserId(), fcmTokenRequest.getDeviceId());
+
+            if (existingToken != null) {
+                // Update the FCM token if the device already has an associated token
+                existingToken.setFcmToken(fcmTokenRequest.getFcmToken());
+                fcmTokenRepository.save(existingToken);
+
+                logger.info("FCM token updated successfully for device: {}", fcmTokenRequest.getDeviceId());
+
+                return "FCM token updated successfully";
+            } else {
+                // Insert a new record if the device does not have an associated token
+                logger.info("No FCM token found for device: {}. Inserting new token.", fcmTokenRequest.getDeviceId());
+
+                FcmToken newToken = new FcmToken();
+                newToken.setUserId(fcmTokenRequest.getUserId());
+                newToken.setDeviceId(fcmTokenRequest.getDeviceId());
+                newToken.setFcmToken(fcmTokenRequest.getFcmToken());
+                fcmTokenRepository.save(newToken);
+                logger.info("FCM token inserted successfully for device: {}", fcmTokenRequest.getDeviceId());
+
+                return "FCM token inserted successfully";
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new CreativePoolException(Errors.E00028.getMessage());
+        }
+    }
+
+
+    public List<String> getFcmTokensByUserId(UUID userId,UserType userType) {
+        try {
+            logger.info("Fetching FCM tokens for userId: {}", userId);
+            List<String> tokens=null;
+            if(userType.equals(UserType.FREELANCER)){
+                tokens=fcmTokenRepository.findFreelancerTokens(userId);
+            }else{
+                tokens=fcmTokenRepository.findClientTokens(userId);
+            }
+            if (tokens.isEmpty()) {
+                logger.warn("No FCM tokens found for userId: {}", userId);
+            }
+            return tokens;
+        } catch (Exception e) {
+            logger.error("Error occurred while fetching FCM tokens for userId: {}", userId, e);
+            throw new CreativePoolException("Unable to fetch FCM tokens. Please try again later.");
+        }
+    }
 
 
 }

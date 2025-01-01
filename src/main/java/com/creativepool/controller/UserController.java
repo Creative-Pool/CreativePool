@@ -1,6 +1,7 @@
 package com.creativepool.controller;
 
 
+import com.creativepool.entity.FcmToken;
 import com.creativepool.entity.UserEntity;
 import com.creativepool.entity.UserType;
 import com.creativepool.exception.CreativePoolException;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/creative-pool/")
@@ -62,6 +64,23 @@ public class UserController {
         } catch (Exception ex) {
             throw new CreativePoolException(ex.getMessage());
         }
+    }
+
+    @PostMapping("/fcm-token/store")
+    public ResponseEntity<String> upsertFcmToken(@RequestBody FcmTokenRequest fcmTokenRequest) {
+        // Call the upsert method from the service to insert or update the token
+        String responseMessage = userService.upsertFcmToken(fcmTokenRequest);
+        return ResponseEntity.ok(responseMessage);  // Success message
+    }
+
+    @GetMapping("/fcm-token")
+    public ResponseEntity<List<String>> getFcmTokensByUserId(@RequestParam UUID id,@RequestParam UserType userType) {
+        List<String> tokens = userService.getFcmTokensByUserId(id,userType);
+
+        if (tokens.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content if no tokens are found
+        }
+        return ResponseEntity.ok(tokens); // 200 OK with the list of tokens
     }
 
 
