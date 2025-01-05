@@ -1,0 +1,494 @@
+{
+	"info": {
+		"_postman_id": "b1c97820-3472-4caf-8d78-0ff22fa2ffef",
+		"name": "Creative-Pool",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "8071463"
+	},
+	"item": [
+		{
+			"name": "Create User",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"jdoe\",\r\n    \"firstName\": \"John\",\r\n    \"lastName\": \"Doe\",\r\n    \"phone\": \"+1234567890\",\r\n    \"email\": \"johndoe@example.com\",\r\n    \"profileImage\": \"https://example.com/images/johndoe.jpg\",\r\n    \"createdDate\": \"2023-01-01T10:00:00Z\",\r\n    \"updatedDate\": \"2023-05-01T10:00:00Z\",\r\n    \"dateOfBirth\": \"1990-01-01\",\r\n    \"gender\": \"MALE\",\r\n    \"city\": \"New York\",\r\n    \"userType\": \"FREELANCER\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/create-user",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"create-user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Ticket",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "ticketDTO",
+							"value": "{\n  \"title\": \"Sample Ticket Title\",\n  \"description\": \"This is a description of the ticket.\",\n  \"reporterName\": \"John Doe\",\n  \"price\": 150.0,\n  \"ticketDeadline\": \"2024-09-25T12:00:00Z\",\n  \"images\": \"image1.jpg,image2.jpg\",\n  \"url\": \"http://example.com/ticket/123\",\n  \"clientId\": \"683cc954-ae0d-4cf7-9f17-8219bd343904\",\n  \"ticketComplexity\": \"Medium\",\n  \"ticketStatus\": \"OPEN\"\n}\n",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/create-ticket",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"create-ticket"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Profile",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Profile",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/create-profile",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"create-profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Assign Ticket",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/629ccf91-f7b6-4375-ad0d-cd0a7ea71b27/assign?userId=6b087190-b7ab-4085-86b2-f39b99bd36e4",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"629ccf91-f7b6-4375-ad0d-cd0a7ea71b27",
+						"assign"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "6b087190-b7ab-4085-86b2-f39b99bd36e4"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Ticket",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/629ccf91-f7b6-4375-ad0d-cd0a7ea71b27",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"629ccf91-f7b6-4375-ad0d-cd0a7ea71b27"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Apply Ticket",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"freelancerId\": \"d0389cd0-8cfe-48b0-8815-43dee1137b44\",\r\n  \"clientId\": \"683cc954-ae0d-4cf7-9f17-8219bd343904\",\r\n  \"ticketId\": \"ac175386-bd40-4aca-beb3-2af84e63f3fe\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/ticket/freelancer-applied",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"ticket",
+						"freelancer-applied"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resumable Upload",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/files/resumable?filename=0bece4f7-5af2-49a7-88ad-8dab2fcc3b3d",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"files",
+						"resumable"
+					],
+					"query": [
+						{
+							"key": "filename",
+							"value": "0bece4f7-5af2-49a7-88ad-8dab2fcc3b3d"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download Link",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/result/download-link",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"result",
+						"download-link"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Meeting",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\r\n\r\n    \"nitish98dhingra@gmail.com\"\r\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/create-meeting",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"create-meeting"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Ticket Close",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/ticket/close?ticketId=41167a0a-8d1f-4f0d-877c-42411175e7b5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"ticket",
+						"close"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "2",
+							"disabled": true
+						},
+						{
+							"key": "size",
+							"value": "10",
+							"disabled": true
+						},
+						{
+							"key": "ticketId",
+							"value": "41167a0a-8d1f-4f0d-877c-42411175e7b5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Freelancer Backoff",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/freelancer/backoff?ticketId=59c98194-1b11-4af1-9701-725c96433263",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"freelancer",
+						"backoff"
+					],
+					"query": [
+						{
+							"key": "ticketId",
+							"value": "59c98194-1b11-4af1-9701-725c96433263"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Freelancer Applied Ticket Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/ticket/freelancer-applied?freelancerId=d0389cd0-8cfe-48b0-8815-43dee1137b44&reachOutStatus=WITHDRAW&page=0&size=10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"ticket",
+						"freelancer-applied"
+					],
+					"query": [
+						{
+							"key": "freelancerId",
+							"value": "d0389cd0-8cfe-48b0-8815-43dee1137b44"
+						},
+						{
+							"key": "reachOutStatus",
+							"value": "WITHDRAW"
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "size",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Client Reached out freelancer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"clientId\": \"683cc954-ae0d-4cf7-9f17-8219bd343904\",\r\n  \"freelancerId\": \"e51bf465-edb8-4d31-8bc2-ebf2cbebbf64\",\r\n  \"ticketId\": \"ac175386-bd40-4aca-beb3-2af84e63f3fe\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/ticket/client-reach-out",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"ticket",
+						"client-reach-out"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Ticket Request Received By Freelancer",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/ticket/freelancer-received?freelancerId=e51bf465-edb8-4d31-8bc2-ebf2cbebbf64&page=0&size=10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"ticket",
+						"freelancer-received"
+					],
+					"query": [
+						{
+							"key": "freelancerId",
+							"value": "e51bf465-edb8-4d31-8bc2-ebf2cbebbf64"
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "size",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update FCM Token",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"userId\": \"d51581bc-a327-4690-adea-df6105116abb\",\r\n  \"deviceId\": \"c2f4c5ae-5b5b-4a42-84f3-36c5f453bcd9\",\r\n  \"fcmToken\": \"tyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/fcm-token/store",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"fcm-token",
+						"store"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get FCM Token",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/creative-pool/fcm-token?id=683cc954-ae0d-4cf7-9f17-8219bd343904&userType=CLIENT",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"creative-pool",
+						"fcm-token"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "683cc954-ae0d-4cf7-9f17-8219bd343904"
+						},
+						{
+							"key": "userType",
+							"value": "CLIENT"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
