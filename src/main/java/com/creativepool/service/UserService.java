@@ -309,7 +309,7 @@ public class UserService {
                 profile.setWorkHistory(workHistoryList);
                 profile.setFreelancerId(row[15] != null ? (UUID) row[15] : null);
             }
-            profile.setFcmToken(row[16] != null ? (String) row[16] : null);
+
             profiles.add(profile);
         }
         return profiles;
@@ -359,7 +359,7 @@ public class UserService {
 
             profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
             profile.setClientId(row[12] != null ? (UUID) row[12] : null);
-            profile.setFcmToken(row[13] != null ? (String) row[13] : null);
+           
             profiles.add(profile);
         }
         return profiles;
