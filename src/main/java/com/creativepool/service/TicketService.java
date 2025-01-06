@@ -706,7 +706,11 @@ public class TicketService {
                 if(optionalFreelancer.isPresent())
                     freelancer=optionalFreelancer.get();
                 Integer totalAssignedTickets=freelancer.getTotalAssignedTickets();
-                totalAssignedTickets= (totalAssignedTickets==null || totalAssignedTickets==0)?0:totalAssignedTickets--;
+                if (totalAssignedTickets != null && totalAssignedTickets != 0) {
+                    totalAssignedTickets = totalAssignedTickets - 1;
+                } else {
+                    totalAssignedTickets = 0;
+                }
 
                 ticketRepository.save(ticket);
                 freelancerReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.WITHDRAW.ordinal());
