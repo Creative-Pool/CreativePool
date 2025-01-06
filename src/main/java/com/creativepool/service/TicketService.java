@@ -138,6 +138,11 @@ public class TicketService {
             logger.info("Assigning ticket with ID '{}' to freelancer with ID '{}'", ticketId, freelancerId);
             Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new BadRequestException(String.format(Errors.E00004.getMessage(), ticketId)));
             logger.debug("Ticket found: {}", ticket);
+
+            if(ticket.getFreelancerId()!=null){
+                throw new BadRequestException(Errors.E00029.getMessage());
+            }
+
             List<Object[]> freelancerDetails = freelancerRepository.getFreelancerNameAndTotalTicketsAssigned(freelancerId);
 
             Object[] freelancerDetail = freelancerDetails.get(0);
@@ -187,6 +192,7 @@ public class TicketService {
     public void deleteTicket(UUID ticketId) {
         // Check if the ticket exists
         Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new BadRequestException(String.format(Errors.E00004.getMessage(), ticketId)));
+        reduceTotalAssignedTicket(ticket.getFreelancerId(),ticketId);
         freelancerReachOutRepository.deleteByTicketId(ticketId);
         clientReachOutRepository.deleteByTicketId(ticketId);
         ticketRepository.delete(ticket);
@@ -712,6 +718,26 @@ public class TicketService {
             logger.error("An error occurred while backing off  from ticket with ID {}: {}", ticketId, e.getMessage(), e);
             throw new CreativePoolException("Unable to unassign from the ticket");
         }
+    }
+
+    private void reduceTotalAssignedTicket(UUID freelancerId,UUID ticketId){
+
+        List<Object[]> freelancerDetails = freelancerRepository.getFreelancerNameAndTotalTicketsAssigned(freelancerId);
+        Object[] freelancerDetail = freelancerDetails.get(0);
+
+        String firstname = (String) freelancerDetail[0];
+        String lastname = (String) freelancerDetail[1];
+        Integer totalAssignedTickets = freelancerDetail[2] != null ? (Integer) freelancerDetail[2] : 0;
+        totalAssignedTickets--;
+
+        if(totalAssignedTickets<0)
+            totalAssignedTickets=0;
+
+        freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, freelancerId);
+
+
+
+
     }
 
 

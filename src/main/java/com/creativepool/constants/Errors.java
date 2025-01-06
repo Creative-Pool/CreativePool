@@ -31,7 +31,8 @@ public enum Errors {
     E00025("Unexpected error occurred while rejecting client request."),
     E00026("Error in creating meeting"),
     E00027("Ticket Already Closed"),
-    E00028("An unexpected error occurred while processing FCM token");
+    E00028("An unexpected error occurred while processing FCM token"),
+    E00029("Ticket already assigned");
 
 
     private final String message;
