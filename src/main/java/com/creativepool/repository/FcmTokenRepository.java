@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface FcmTokenRepository  extends JpaRepository<FcmToken,UUID> {
 
-    FcmToken findByUserIdAndDeviceId(UUID userId,UUID deviceId);
+    FcmToken findByUserIdAndDeviceId(UUID userId,String deviceId);
 
     @Query(value = "Select fcm_token from fcm_tokens where user_id=:userId",nativeQuery = true)
     List<String> findByUserId(UUID userId);

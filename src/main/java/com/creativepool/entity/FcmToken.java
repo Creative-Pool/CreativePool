@@ -20,7 +20,7 @@ public class FcmToken {
     private UUID userId;  // User ID associated with the device
 
     @Column(name = "device_id", nullable = false, unique = true)
-    private UUID deviceId;  // Unique identifier for the device
+    private String deviceId;  // Unique identifier for the device
 
     @Column(name = "fcm_token", nullable = false)
     private String fcmToken;  // FCM token for the device
