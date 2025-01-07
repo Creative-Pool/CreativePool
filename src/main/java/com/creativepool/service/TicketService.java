@@ -165,10 +165,10 @@ public class TicketService {
 
             List<String> attendeeEmails=userRepository.findEmailsByClientIdOrFreelancerId(ticket.getClientId(),freelancerId);
 
-            String meetingUrl= googleMeetService.createInstantMeeting(attendeeEmails);
+          //  String meetingUrl= googleMeetService.createInstantMeeting(attendeeEmails);
 
             ticket.setFreelancerId(freelancerId);
-            ticket.setMeetingUrl(meetingUrl);
+            //ticket.setMeetingUrl(meetingUrl);
             ticket.setAssignee(firstname + " " + lastname);
             ticket.setTicketStatus(TicketStatus.IN_PROGRESS);
             Ticket savedTicket = ticketRepository.save(ticket);
@@ -404,9 +404,20 @@ public class TicketService {
                 freelancerReachOut.getFreelancerId(), freelancerReachOut.getTicketId());
         try {
            Optional<FreelancerReachOut> optionalFreelancerReachOut= freelancerReachOutRepository.findByTicketIdAndFreelancerId(freelancerReachOut.getTicketId(),freelancerReachOut.getFreelancerId());
+
             FreelancerReachOut savedFreelancerReachOut=null;
            if(optionalFreelancerReachOut.isPresent()){
                 FreelancerReachOut existingFreelancerReachOut=optionalFreelancerReachOut.get();
+                
+                if(existingFreelancerReachOut.getReachOutStatus().equals(ReachOutStatus.APPLIED)){
+                    throw new BadRequestException(Errors.E00030.getMessage());
+                }
+
+               if(existingFreelancerReachOut.getReachOutStatus().equals(ReachOutStatus.APPROVED)){
+                   throw new BadRequestException(Errors.E00029.getMessage());
+               }
+
+                
                 existingFreelancerReachOut.setReachOutStatus(ReachOutStatus.APPLIED);
                 savedFreelancerReachOut = freelancerReachOutRepository.save(existingFreelancerReachOut);
            }else {
@@ -415,7 +426,11 @@ public class TicketService {
            }
             logger.info("Successfully created FreelancerReachOut entry with ID: {}", savedFreelancerReachOut.getId());
             return savedFreelancerReachOut;
-        } catch (Exception e) {
+        }catch (BadRequestException e) {
+            logger.error(e.getMessage(),e);
+            throw new BadRequestException(e.getMessage());
+        }
+        catch (Exception e) {
             logger.error(e.getMessage(),e);
             throw new CreativePoolException(Errors.E00012.getMessage());
         }
@@ -699,6 +714,11 @@ public class TicketService {
                 freelancerId=ticket.getFreelancerId();
                 Optional<Freelancer> optionalFreelancer=freelancerRepository.findById(freelancerId);
 
+                if(ticket.getTicketStatus().equals(TicketStatus.OPEN) )
+                    throw new BadRequestException(Errors.E00031.getMessage());
+                if(ticket.getTicketStatus().equals(TicketStatus.CLOSED) )
+                    throw new BadRequestException(Errors.E00032.getMessage());
+
                 ticket.setTicketStatus(TicketStatus.OPEN); // Assuming `status` is an enum
                 ticket.setFreelancerId(null); // Assuming `freelancerId` is a field in the Ticket entity
                 ticket.setAssignee(null);
@@ -718,6 +738,9 @@ public class TicketService {
 
                 logger.info("successfully backed off from ticket with ID {}.", ticketId);
             }
+        } catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
+            throw new BadRequestException(e.getMessage());
         } catch (Exception e) {
             logger.error("An error occurred while backing off  from ticket with ID {}: {}", ticketId, e.getMessage(), e);
             throw new CreativePoolException("Unable to unassign from the ticket");

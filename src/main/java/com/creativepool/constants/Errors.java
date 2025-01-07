@@ -32,7 +32,13 @@ public enum Errors {
     E00026("Error in creating meeting"),
     E00027("Ticket Already Closed"),
     E00028("An unexpected error occurred while processing FCM token"),
-    E00029("Ticket already assigned");
+    E00029("Ticket already assigned"),
+    E00030("Ticket already applied"),
+    E00031("Ticket is not assigned, so it cannot be withdrawn."),
+    E00032("Ticket is closed, so it cannot be withdrawn.");
+
+
+
 
 
     private final String message;
