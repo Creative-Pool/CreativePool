@@ -359,7 +359,7 @@ public class UserService {
 
             profile.setRating(row[11] != null ? ((BigDecimal) row[11]).doubleValue() : null);
             profile.setClientId(row[12] != null ? (UUID) row[12] : null);
-           
+
             profiles.add(profile);
         }
         return profiles;
@@ -444,7 +444,7 @@ public class UserService {
         profile.setBio(Utils.getOrDefault((String) row[11], profile.getBio()));
         profile.setRating(Utils.getOrDefault(row[12] != null ? ((BigDecimal) row[12]).doubleValue() : null, profile.getRating()));
         profile.setMinCharges(Utils.getOrDefault((BigDecimal) row[13], profile.getMinCharges()));
-        profile.setFreelancerId(Utils.getOrDefault((UUID) row[10], profile.getFreelancerId()));
+        profile.setFreelancerId(Utils.getOrDefault((UUID) row[14], profile.getFreelancerId()));
         return profile;
     }
 
