@@ -419,7 +419,9 @@ public class TicketService {
                 assignTicket(freelancerReachOut.getTicketId(), freelancerReachOut.getFreelancerId());
 
                 freelancerReachOutToUpdate.setReachOutStatus(ReachOutStatus.APPROVED);
-            } else {
+            } else if (optionalClientReachOut.isPresent() && optionalClientReachOut.get().getReachOutStatus().equals(ReachOutStatus.APPROVED)) {
+                throw new BadRequestException(Errors.E00030.getMessage());
+            }else {
                 freelancerReachOutToUpdate= optionalFreelancerReachOut.orElseGet(FreelancerReachOut::new);
                 freelancerReachOutToUpdate.setFreelancerId(freelancerReachOut.getFreelancerId());
                 freelancerReachOutToUpdate.setTicketId(freelancerReachOut.getTicketId());
@@ -463,7 +465,9 @@ public class TicketService {
                 assignTicket(clientReachOut.getTicketId(), clientReachOut.getFreelancerId());
                 freelancerReachOutRepository.updateReachOutStatus(clientReachOut.getTicketId(),clientReachOut.getFreelancerId(),ReachOutStatus.APPROVED.ordinal());
                 clientReachOut.setReachOutStatus(ReachOutStatus.APPROVED);
-            } else {
+            } else if(freelancerReachOut.isPresent() && freelancerReachOut.get().getReachOutStatus().equals(ReachOutStatus.APPROVED)){
+                throw new BadRequestException(Errors.E00030.getMessage());
+            }else {
                 clientReachOut.setReachOutStatus(ReachOutStatus.REQUESTED);
             }
             savedClientReachOut= clientReachOutRepository.save(clientReachOut);
