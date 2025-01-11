@@ -5,5 +5,6 @@ public enum ReachOutStatus {
     APPROVED,
     REJECTED,
     WITHDRAW,
-    REQUESTED
+    REQUESTED,
+    CLOSED
 }

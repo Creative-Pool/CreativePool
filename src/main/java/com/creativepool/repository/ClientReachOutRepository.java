@@ -3,6 +3,7 @@ package com.creativepool.repository;
 
 import com.creativepool.constants.ReachOutStatus;
 import com.creativepool.entity.ClientReachOut;
+import com.creativepool.entity.FreelancerReachOut;
 import com.creativepool.entity.Ticket;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -38,6 +40,10 @@ public interface ClientReachOutRepository extends JpaRepository<ClientReachOut, 
     @Transactional
     @Query(value ="update client_reach_out set reach_out_status=:reachOutStatus where freelancer_id=:freelancerId and ticket_id=:ticketId",nativeQuery = true)
     public void updateReachOutStatus(UUID ticketId,UUID freelancerId,Integer reachOutStatus);
+
+    @Transactional
+    public Optional<ClientReachOut> findByTicketIdAndFreelancerId(UUID freelancerId, UUID clientId);
+
 
 
 }

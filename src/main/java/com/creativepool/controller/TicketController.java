@@ -3,6 +3,7 @@ package com.creativepool.controller;
 import com.creativepool.constants.ReachOutStatus;
 import com.creativepool.entity.ClientReachOut;
 import com.creativepool.entity.FreelancerReachOut;
+import com.creativepool.entity.UserType;
 import com.creativepool.models.*;
 import com.creativepool.service.CloudStorageService;
 import com.creativepool.service.TicketService;
@@ -150,13 +151,13 @@ public class TicketController {
         return new ResponseEntity<>(ticketService.getApplicantsForTickets(ticketId,page,size),HttpStatus.OK);
     }
 
-    @DeleteMapping("/freelancer/reject")
+    @PostMapping("/freelancer/reject")
     public ResponseEntity<Void> rejectFreelancerRequest(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "freelancerId") UUID freelancerId) {
         ticketService.rejectFreelancerRequest(ticketId,freelancerId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @DeleteMapping("/client/reject")
+    @PostMapping("/client/reject")
     public ResponseEntity<Void> rejectClientRequest(@RequestParam(name = "ticketId") UUID ticketId,@RequestParam(name = "freelancerId") UUID freelancerId) {
         ticketService.rejectClientRequest(ticketId,freelancerId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
@@ -170,8 +171,8 @@ public class TicketController {
     }
 
     @DeleteMapping("/freelancer/backoff")
-    public ResponseEntity<Void> backoffFromTicket(@RequestParam UUID ticketId) {
-        ticketService.backoffFromTicket(ticketId);
+    public ResponseEntity<Void> backoffFromTicket(@RequestParam UUID ticketId,@RequestParam UserType userType) {
+        ticketService.backoffFromTicket(ticketId,userType);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 
     }

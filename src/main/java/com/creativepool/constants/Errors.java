@@ -35,7 +35,10 @@ public enum Errors {
     E00029("Ticket already assigned"),
     E00030("Ticket already applied"),
     E00031("Ticket is not assigned, so it cannot be withdrawn."),
-    E00032("Ticket is closed, so it cannot be withdrawn.");
+    E00032("Ticket is closed, so it cannot be withdrawn."),
+    E00033("Ticket already requested"),
+    E00034("You cannot reject the ticket");
+
 
 
 

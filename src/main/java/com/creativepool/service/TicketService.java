@@ -160,6 +160,7 @@ public class TicketService {
             }
 
             freelancerReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.APPROVED.ordinal());
+            clientReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.APPROVED.ordinal());
 
             freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, freelancerId);
 
@@ -400,38 +401,41 @@ public class TicketService {
 
     // Add a new freelancer reach out entry
     public FreelancerReachOut createFreelancerReachOut(FreelancerReachOut freelancerReachOut) {
-        logger.info("Attempting to create a new FreelancerReachOut entry with Freelancer ID: {} and Ticket ID: {}",
-                freelancerReachOut.getFreelancerId(), freelancerReachOut.getTicketId());
+        logger.info("Attempting to create a new FreelancerReachOut entry with Freelancer ID: {} and Ticket ID: {}", freelancerReachOut.getFreelancerId(), freelancerReachOut.getTicketId());
         try {
-           Optional<FreelancerReachOut> optionalFreelancerReachOut= freelancerReachOutRepository.findByTicketIdAndFreelancerId(freelancerReachOut.getTicketId(),freelancerReachOut.getFreelancerId());
+            Optional<FreelancerReachOut> optionalFreelancerReachOut = freelancerReachOutRepository.findByTicketIdAndFreelancerId(freelancerReachOut.getTicketId(), freelancerReachOut.getFreelancerId());
+            Optional<ClientReachOut> optionalClientReachOut = clientReachOutRepository.findByTicketIdAndFreelancerId(freelancerReachOut.getTicketId(), freelancerReachOut.getFreelancerId());
 
-            FreelancerReachOut savedFreelancerReachOut=null;
-           if(optionalFreelancerReachOut.isPresent()){
-                FreelancerReachOut existingFreelancerReachOut=optionalFreelancerReachOut.get();
-                
-                if(existingFreelancerReachOut.getReachOutStatus().equals(ReachOutStatus.APPLIED)){
-                    throw new BadRequestException(Errors.E00030.getMessage());
-                }
 
-               if(existingFreelancerReachOut.getReachOutStatus().equals(ReachOutStatus.APPROVED)){
-                   throw new BadRequestException(Errors.E00029.getMessage());
-               }
+            if (optionalFreelancerReachOut.isPresent() && optionalFreelancerReachOut.get().getReachOutStatus().equals(ReachOutStatus.APPLIED)) {
+                throw new BadRequestException(Errors.E00030.getMessage());
+            }
 
-                
-                existingFreelancerReachOut.setReachOutStatus(ReachOutStatus.APPLIED);
-                savedFreelancerReachOut = freelancerReachOutRepository.save(existingFreelancerReachOut);
-           }else {
-               freelancerReachOut.setReachOutStatus(ReachOutStatus.APPLIED);
-               savedFreelancerReachOut = freelancerReachOutRepository.save(freelancerReachOut);
-           }
+            if (optionalFreelancerReachOut.isPresent() && optionalFreelancerReachOut.get().getReachOutStatus().equals(ReachOutStatus.APPROVED)) {
+                throw new BadRequestException(Errors.E00029.getMessage());
+            }
+            FreelancerReachOut freelancerReachOutToUpdate =optionalFreelancerReachOut.orElseGet(FreelancerReachOut::new);
+            if (optionalClientReachOut.isPresent() && optionalClientReachOut.get().getReachOutStatus().equals(ReachOutStatus.REQUESTED)) {
+                assignTicket(freelancerReachOut.getTicketId(), freelancerReachOut.getFreelancerId());
+
+                freelancerReachOutToUpdate.setReachOutStatus(ReachOutStatus.APPROVED);
+            } else {
+                freelancerReachOutToUpdate= optionalFreelancerReachOut.orElseGet(FreelancerReachOut::new);
+                freelancerReachOutToUpdate.setFreelancerId(freelancerReachOut.getFreelancerId());
+                freelancerReachOutToUpdate.setTicketId(freelancerReachOut.getTicketId());
+                freelancerReachOutToUpdate.setClientId(freelancerReachOut.getClientId());
+                freelancerReachOutToUpdate.setReachOutStatus(ReachOutStatus.APPLIED);
+            }
+
+            FreelancerReachOut savedFreelancerReachOut = freelancerReachOutRepository.save(freelancerReachOutToUpdate);
+
             logger.info("Successfully created FreelancerReachOut entry with ID: {}", savedFreelancerReachOut.getId());
             return savedFreelancerReachOut;
-        }catch (BadRequestException e) {
-            logger.error(e.getMessage(),e);
+        } catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
             throw new BadRequestException(e.getMessage());
-        }
-        catch (Exception e) {
-            logger.error(e.getMessage(),e);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
             throw new CreativePoolException(Errors.E00012.getMessage());
         }
     }
@@ -442,10 +446,32 @@ public class TicketService {
         logger.info("Attempting to create a new ClientReachOut entry with Client ID: {} and Ticket ID: {}",
                 clientReachOut.getClientId(), clientReachOut.getTicketId());
         try {
-            clientReachOut.setReachOutStatus(ReachOutStatus.REQUESTED);
-            ClientReachOut savedClientReachOut = clientReachOutRepository.save(clientReachOut);
+            ClientReachOut savedClientReachOut=new ClientReachOut();
+
+            Optional<ClientReachOut> optionalClientReachOut= clientReachOutRepository.findByTicketIdAndFreelancerId(clientReachOut.getTicketId(),clientReachOut.getFreelancerId());
+            Optional<FreelancerReachOut> freelancerReachOut=  freelancerReachOutRepository.findByTicketIdAndFreelancerId(clientReachOut.getTicketId(),clientReachOut.getFreelancerId());
+
+            if(optionalClientReachOut.isPresent() && optionalClientReachOut.get().getReachOutStatus().equals(ReachOutStatus.REQUESTED)){
+                throw new BadRequestException(Errors.E00033.getMessage());
+            }
+
+            if(optionalClientReachOut.isPresent() && optionalClientReachOut.get().getReachOutStatus().equals(ReachOutStatus.APPROVED)){
+                throw new BadRequestException(Errors.E00029.getMessage());
+            }
+
+            if (freelancerReachOut.isPresent() && freelancerReachOut.get().getReachOutStatus().equals(ReachOutStatus.APPLIED)) {
+                assignTicket(clientReachOut.getTicketId(), clientReachOut.getFreelancerId());
+                freelancerReachOutRepository.updateReachOutStatus(clientReachOut.getTicketId(),clientReachOut.getFreelancerId(),ReachOutStatus.APPROVED.ordinal());
+                clientReachOut.setReachOutStatus(ReachOutStatus.APPROVED);
+            } else {
+                clientReachOut.setReachOutStatus(ReachOutStatus.REQUESTED);
+            }
+            savedClientReachOut= clientReachOutRepository.save(clientReachOut);
             logger.info("Successfully created ClientReachOut entry with ID: {}", savedClientReachOut.getId());
             return savedClientReachOut;
+        } catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
+            throw new BadRequestException(e.getMessage());
         } catch (Exception e) {
             logger.error("Failed to create ClientReachOut entry. Error: {}", e.getMessage(), e);
             throw new CreativePoolException(Errors.E00011.getMessage());
@@ -646,22 +672,32 @@ public class TicketService {
 
     public void rejectFreelancerRequest(UUID ticketId,UUID freelancerId) {
         try {
-            logger.info("Rejection of request started tickerId {}, freelancerId{}", ticketId, freelancerId);
+            logger.info("Rejection request started tickerId {}, freelancerId{}", ticketId, freelancerId);
+
+            Optional<FreelancerReachOut> optionalFreelancerReachOut=  freelancerReachOutRepository.findByTicketIdAndFreelancerId(ticketId,freelancerId);
+
+            if(optionalFreelancerReachOut.isPresent() && !optionalFreelancerReachOut.get().getReachOutStatus().equals(ReachOutStatus.APPLIED)){
+                throw new BadRequestException(Errors.E00034.getMessage());
+            }
+
             freelancerReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.REJECTED.ordinal());
-            logger.info("Rejection of request completed tickerId {}, freelancerId{}", ticketId, freelancerId);
-        } catch (Exception e) {
+            logger.info("Rejection  request completed tickerId {}, freelancerId{}", ticketId, freelancerId);
+        } catch (BadRequestException e) {
+            logger.error(e.getMessage(), e);
+            throw new BadRequestException(e.getMessage());
+        }catch (Exception e) {
             logger.error("Unexpected error during deletion of freelancer request: ticketId={}, freelancerId={}. Error: {}", ticketId, freelancerId, e.getMessage(), e);
             throw new CreativePoolException(Errors.E00024.getMessage());
         }
     }
 
     public void rejectClientRequest(UUID ticketId,UUID freelancerId) {
-        logger.info("Deletion of request started tickerId {}, freelancerId {}", ticketId, freelancerId);
+        logger.info("Rejection  request started tickerId {}, freelancerId {}", ticketId, freelancerId);
         try {
             clientReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.REJECTED.ordinal());
-            logger.info("Deletion of request completed tickerId {}, freelancerId {}", ticketId, freelancerId);
+            logger.info("Rejection of request completed tickerId {}, freelancerId {}", ticketId, freelancerId);
         } catch (Exception e) {
-            logger.error("Unexpected error during deletion of client request: ticketId={}, freelancerId={}. Error: {}", ticketId, freelancerId, e.getMessage(), e);
+            logger.error("Unexpected error during Rejection of client request: ticketId={}, freelancerId={}. Error: {}", ticketId, freelancerId, e.getMessage(), e);
             throw new CreativePoolException(Errors.E00025.getMessage());
         }
     }
@@ -694,6 +730,9 @@ public class TicketService {
                 ticket.setTicketStatus(TicketStatus.CLOSED); // Assuming `status` is an enum
                 ticketRepository.save(ticket);
                 freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, ticket.getFreelancerId());
+                freelancerReachOutRepository.updateReachOutStatus(ticketId,ticket.getFreelancerId(),ReachOutStatus.CLOSED.ordinal());
+                clientReachOutRepository.updateReachOutStatus(ticketId,ticket.getFreelancerId(),ReachOutStatus.CLOSED.ordinal());
+
                 logger.info("Ticket with ID {} marked as closed successfully.", ticketId);
 
             }
@@ -703,7 +742,7 @@ public class TicketService {
         }
     }
 
-    public void backoffFromTicket(UUID ticketId) {
+    public void backoffFromTicket(UUID ticketId,UserType userType) {
         try {
             logger.info("Attempting to back off freelancer  from ticket with ID {}.", ticketId);
             Optional<Ticket> ticketOpt = ticketRepository.findById(ticketId);
@@ -712,7 +751,7 @@ public class TicketService {
                 Ticket ticket = ticketOpt.get();
                 Freelancer freelancer=null;
                 freelancerId=ticket.getFreelancerId();
-                Optional<Freelancer> optionalFreelancer=freelancerRepository.findById(freelancerId);
+
 
                 if(ticket.getTicketStatus().equals(TicketStatus.OPEN) )
                     throw new BadRequestException(Errors.E00031.getMessage());
@@ -723,19 +762,11 @@ public class TicketService {
                 ticket.setFreelancerId(null); // Assuming `freelancerId` is a field in the Ticket entity
                 ticket.setAssignee(null);
 
-                if(optionalFreelancer.isPresent())
-                    freelancer=optionalFreelancer.get();
-                Integer totalAssignedTickets=freelancer.getTotalAssignedTickets();
-                if (totalAssignedTickets != null && totalAssignedTickets != 0) {
-                    totalAssignedTickets = totalAssignedTickets - 1;
-                } else {
-                    totalAssignedTickets = 0;
-                }
-
+                reduceTotalAssignedTicket(freelancerId,ticketId);
+                ReachOutStatus freelancerReachOutStatus=userType.equals(UserType.FREELANCER)?ReachOutStatus.WITHDRAW:ReachOutStatus.CLOSED;
                 ticketRepository.save(ticket);
-                freelancerReachOutRepository.updateReachOutStatus(ticketId,freelancerId,ReachOutStatus.WITHDRAW.ordinal());
-                freelancerRepository.updateTotalTicketsAssigned(totalAssignedTickets, freelancerId);
-
+                freelancerReachOutRepository.updateReachOutStatus(ticketId,freelancerId,freelancerReachOutStatus.ordinal());
+                clientReachOutRepository.deleteAppliedTicket(ticketId,freelancerId);
                 logger.info("successfully backed off from ticket with ID {}.", ticketId);
             }
         } catch (BadRequestException e) {
