@@ -420,7 +420,7 @@ public class TicketService {
 
                 freelancerReachOutToUpdate.setReachOutStatus(ReachOutStatus.APPROVED);
             } else if (optionalClientReachOut.isPresent() && optionalClientReachOut.get().getReachOutStatus().equals(ReachOutStatus.APPROVED)) {
-                throw new BadRequestException(Errors.E00030.getMessage());
+                throw new BadRequestException(Errors.E00029.getMessage());
             }else {
                 freelancerReachOutToUpdate= optionalFreelancerReachOut.orElseGet(FreelancerReachOut::new);
                 freelancerReachOutToUpdate.setFreelancerId(freelancerReachOut.getFreelancerId());
