@@ -45,8 +45,8 @@ public class FileService {
     @Autowired
     TicketResultRepository ticketResultRepository;
 
-    @Autowired
-    CloudStorageService cloudStorageService;
+//    @Autowired
+//    CloudStorageService cloudStorageService;
 
     Logger logger= LoggerFactory.getLogger(FileService.class);
 
