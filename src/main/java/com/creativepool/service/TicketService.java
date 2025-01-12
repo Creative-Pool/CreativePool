@@ -43,8 +43,8 @@ public class TicketService {
     @Autowired
     FreelancerTicketApplicantsRepository freelancerTicketApplicantsRepository;
 
-    @Autowired
-    CloudStorageService cloudStorageService;
+//    @Autowired
+//    CloudStorageService cloudStorageService;
 
     @Autowired
     ClientReachOutRepository clientReachOutRepository;
@@ -126,7 +126,7 @@ public class TicketService {
         if(!StringUtils.isEmpty(ticket.getFilename())) {
             String[] files = ticket.getFilename().split(",");
             for (String file : files) {
-                fileUrls.add(cloudStorageService.generateSignedUrl(file));
+               // fileUrls.add(cloudStorageService.generateSignedUrl(file));
             }
             responseDTO.setUrls(fileUrls);
         }
@@ -311,7 +311,7 @@ public class TicketService {
                 String[] files=((String)row[7]).split(",");
 
                 for(String file:files) {
-                    imagesUrl.add(cloudStorageService.generateSignedUrl(file));
+                 //   imagesUrl.add(cloudStorageService.generateSignedUrl(file));
                 }
                 response.setImages(String.join(",", imagesUrl));
             }
@@ -510,7 +510,7 @@ public class TicketService {
                         String[] files = ((String) array[7]).split(",");
                         List<String> imagesUrls = new ArrayList<>();
                         for (String file : files) {
-                            imagesUrls.add(cloudStorageService.generateSignedUrl(file));
+                            //imagesUrls.add(cloudStorageService.generateSignedUrl(file));
                         }
 
                         dto.setUrls(imagesUrls);
@@ -640,7 +640,7 @@ public class TicketService {
                         String[] files = ((String) array[7]).split(",");
                         List<String> imagesUrls = new ArrayList<>();
                         for (String file : files) {
-                            imagesUrls.add(cloudStorageService.generateSignedUrl(file));
+                         //   imagesUrls.add(cloudStorageService.generateSignedUrl(file));
                         }
 
                         dto.setUrls(imagesUrls);

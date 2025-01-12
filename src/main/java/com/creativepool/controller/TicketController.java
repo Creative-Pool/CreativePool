@@ -5,7 +5,7 @@ import com.creativepool.entity.ClientReachOut;
 import com.creativepool.entity.FreelancerReachOut;
 import com.creativepool.entity.UserType;
 import com.creativepool.models.*;
-import com.creativepool.service.CloudStorageService;
+
 import com.creativepool.service.TicketService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +29,8 @@ public class TicketController {
     @Autowired
     private TicketService ticketService;
 
-    @Autowired
-    CloudStorageService cloudStorageService;
+//    @Autowired
+//    CloudStorageService cloudStorageService;
 
     //done
     @PostMapping("/create-ticket")

@@ -65,8 +65,8 @@ public class UserService {
     @Autowired
     EntityManager entityManager;
 
-    @Autowired
-    CloudStorageService cloudStorageService;
+//    @Autowired
+//    CloudStorageService cloudStorageService;
 
     @Autowired
     private FcmTokenRepository fcmTokenRepository;
@@ -181,8 +181,8 @@ public class UserService {
         UserEntity userEntity;
         if (optionalUserEntity.isPresent()) {
             List<String> filenames = new ArrayList<>();
-            if (!file.isEmpty())
-                cloudStorageService.uploadFile(file, filenames);
+//            if (!file.isEmpty())
+//                cloudStorageService.uploadFile(file, filenames);
 
             userEntity = optionalUserEntity.get();
             userEntity.setCity(profile.getCity());
@@ -211,7 +211,7 @@ public class UserService {
         if (optionalUserEntity.isPresent()) {
             userEntity = optionalUserEntity.get();
             List<String> filenames = new ArrayList<>();
-            if (!file.isEmpty()) cloudStorageService.uploadFile(file, filenames);
+        //    if (!file.isEmpty()) cloudStorageService.uploadFile(file, filenames);
 
             userEntity.setCity(profile.getCity());
             userEntity.setGender(profile.getGender());
@@ -274,7 +274,7 @@ public class UserService {
 
                 String[] files = ((String) row[9]).split(",");
                 for (String file : files) {
-                    profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
+                  //  profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
                 }
                 profile.setProfileImage(String.join(",", profileImagesUrl));
 
@@ -343,7 +343,7 @@ public class UserService {
 
                 String[] files = ((String) row[9]).split(",");
                 for (String file : files) {
-                    profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
+               //     profileImagesUrl.add(cloudStorageService.generateSignedUrl(file));
                 }
                 profile.setProfileImage(String.join(",", profileImagesUrl));
 
@@ -435,7 +435,7 @@ public class UserService {
         profile.setEmail(Utils.getOrDefault((String) row[4], profile.getEmail()));
 
 
-        profile.setProfileImage(Utils.getOrDefault(row[5] != null ? cloudStorageService.generateSignedUrl((String) row[5]) : null, profile.getProfileImage()));
+      //  profile.setProfileImage(Utils.getOrDefault(row[5] != null ? cloudStorageService.generateSignedUrl((String) row[5]) : null, profile.getProfileImage()));
         profile.setDateOfBirth(Utils.getOrDefault((Date) row[6], profile.getDateOfBirth()));
         profile.setGender(Utils.getOrDefault(row[7] != null ? Gender.values()[(Integer) row[7]] : null, profile.getGender()));
         profile.setCity(Utils.getOrDefault((String) row[8], profile.getCity()));
@@ -474,11 +474,11 @@ public class UserService {
             List<String> filenames = new ArrayList<>();
             if (file != null && !file.isEmpty()) {
                 String oldProfilePicture = userEntity.getFilename();
-                cloudStorageService.uploadFile(file, filenames);
+             //   cloudStorageService.uploadFile(file, filenames);
                 userEntity.setFilename(String.join(",", filenames));
 
-                if (!StringUtils.isEmpty(oldProfilePicture))
-                    cloudStorageService.deleteFile(bucketName, oldProfilePicture);
+//                if (!StringUtils.isEmpty(oldProfilePicture))
+//                    cloudStorageService.deleteFile(bucketName, oldProfilePicture);
             }
 
 
@@ -511,12 +511,12 @@ public class UserService {
             List<String> filenames = new ArrayList<>();
             if (file != null && !file.isEmpty()) {
                 String oldProfilePicture = userEntity.getFilename();
-                cloudStorageService.uploadFile(file, filenames);
+                //   cloudStorageService.uploadFile(file, filenames);
                 userEntity.setFilename(String.join(",", filenames));
 
-                if (!StringUtils.isEmpty(oldProfilePicture)) {
-                    cloudStorageService.deleteFile(bucketName, oldProfilePicture);
-                }
+//                if (!StringUtils.isEmpty(oldProfilePicture)) {
+//                    cloudStorageService.deleteFile(bucketName, oldProfilePicture);
+//                }
             }
 
             userEntity.setCity(getOrDefault(profile.getCity(), userEntity.getCity()));
