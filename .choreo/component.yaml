@@ -1,0 +1,11 @@
+schemaVersion: "1.1"
+endpoints:
+  - name: creative-pool
+    displayName: Creative Pool
+    service:
+      basePath: /
+      port: 8080
+    type: REST
+    networkVisibilities:
+      - Public
+    schemaFilePath: .
