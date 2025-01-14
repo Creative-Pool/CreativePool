@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -30,16 +31,21 @@ public class CreativePoolApplication {
 
 
 	public static void main(String[] args) {
-		printApplicationLocation();
+		listFilesRecursively(new File("/"));
 		SpringApplication.run(CreativePoolApplication.class, args);
 	}
 
-	private static void printApplicationLocation() {
-		try {
-			URL location = CreativePoolApplication.class.getProtectionDomain().getCodeSource().getLocation();
-			System.out.println("Application is running from: " + location.getPath());
-		} catch (Exception e) {
-			System.err.println("Failed to determine the application location: " + e.getMessage());
+	private static void listFilesRecursively(File directory) {
+		if (directory != null && directory.isDirectory()) {
+			File[] files = directory.listFiles();
+			if (files != null) {
+				for (File file : files) {
+					System.out.println(file.getAbsolutePath());
+					if (file.isDirectory()) {
+						listFilesRecursively(file);
+					}
+				}
+			}
 		}
 	}
 
