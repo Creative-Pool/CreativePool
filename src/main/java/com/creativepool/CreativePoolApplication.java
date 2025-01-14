@@ -36,22 +36,22 @@ public class CreativePoolApplication {
 	@Value("${credential.file}")
 	private String credentialsFilePath;
 
-//	@Bean
-//	public RestTemplate restTemplate() throws IOException {
-//		// Load the credentials file from the specified path
-//		GoogleCredentials credentials = GoogleCredentials
-//				.fromStream(new FileInputStream("src/main/resources/" + credentialsFilePath))
-//				.createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
-//
-//		return new RestTemplateBuilder()
-//				.interceptors((request, body, execution) -> {
-//					// Refresh the credentials if the access token is expired
-//					credentials.refreshIfExpired();
-//					// Set the Bearer token for authorization
-//					request.getHeaders().setBearerAuth(credentials.getAccessToken().getTokenValue());
-//					return execution.execute(request, body);
-//				})
-//				.build();
+	@Bean
+	public RestTemplate restTemplate() throws IOException {
+		// Load the credentials file from the specified path
+		GoogleCredentials credentials = GoogleCredentials
+				.fromStream(new FileInputStream("src/main/resources/" + credentialsFilePath))
+				.createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
+
+		return new RestTemplateBuilder()
+				.interceptors((request, body, execution) -> {
+					// Refresh the credentials if the access token is expired
+					credentials.refreshIfExpired();
+					// Set the Bearer token for authorization
+					request.getHeaders().setBearerAuth(credentials.getAccessToken().getTokenValue());
+					return execution.execute(request, body);
+				})
+				.build();
 
 //		GoogleCredentials credentials = GoogleCredentials
 //				.fromStream(new FileInputStream("src/main/resources/your-credentials.json"))
@@ -64,13 +64,7 @@ public class CreativePoolApplication {
 //
 //		// Create and return a RestTemplate
 //		return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
-	//	 }
-
-
-	@Bean
-	public RestTemplate restTemplate(){
-		return new RestTemplate();
-	}
+		 }
 
 
 }
