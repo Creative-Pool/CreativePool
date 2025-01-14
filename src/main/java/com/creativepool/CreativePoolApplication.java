@@ -31,7 +31,7 @@ public class CreativePoolApplication {
 
 
 	public static void main(String[] args) {
-		listFilesRecursively(new File("/"));
+		listFilesRecursively(new File("/workspace"));
 		SpringApplication.run(CreativePoolApplication.class, args);
 	}
 
