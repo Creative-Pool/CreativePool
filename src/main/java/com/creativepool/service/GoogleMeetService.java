@@ -52,7 +52,7 @@ public class GoogleMeetService {
         List<String> SCOPES = Collections.singletonList("https://www.googleapis.com/auth/calendar");
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(
                 jsonFactory,
-                new FileReader(new File(googleMeetCredentialsPath))
+                new FileReader(new File("/workspace/target/classes/"+googleMeetCredentialsPath))
         );
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(

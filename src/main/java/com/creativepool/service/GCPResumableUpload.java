@@ -33,11 +33,13 @@ public class GCPResumableUpload {
     @Value("${spring.cloud.gcp.storage.bucket}")
     private String bucketName;
     public GCPResumableUpload(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
-        Resource resource = new ClassPathResource(credentialFile);
-        Credentials credentials = GoogleCredentials
-                .fromStream(resource.getInputStream());
-        storage = StorageOptions.newBuilder().setCredentials(credentials)
-                .setProjectId(projectId).build().getService();
+        FileInputStream serviceAccountStream = new FileInputStream("/workspace/target/classes/" + credentialFile);
+        Credentials credentials = GoogleCredentials.fromStream(serviceAccountStream);
+        storage = StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .setProjectId(projectId)
+                .build()
+                .getService();
     }
 
     public  void resumableUpload() throws IOException, URISyntaxException {

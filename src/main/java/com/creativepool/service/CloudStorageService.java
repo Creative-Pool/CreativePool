@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -48,11 +49,13 @@ public class CloudStorageService {
     Logger logger= LoggerFactory.getLogger(CloudStorageService.class);
 
     public CloudStorageService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
-        Resource resource = new ClassPathResource(credentialFile);
-        Credentials credentials = GoogleCredentials
-                .fromStream(resource.getInputStream());
-        storage = StorageOptions.newBuilder().setCredentials(credentials)
-                .setProjectId(projectId).build().getService();
+        FileInputStream serviceAccountStream = new FileInputStream("/workspace/target/classes/" + credentialFile);
+        Credentials credentials = GoogleCredentials.fromStream(serviceAccountStream);
+        storage = StorageOptions.newBuilder()
+                .setCredentials(credentials)
+                .setProjectId(projectId)
+                .build()
+                .getService();
     }
 
 
