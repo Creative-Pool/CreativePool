@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,7 +30,17 @@ public class CreativePoolApplication {
 
 
 	public static void main(String[] args) {
+		printApplicationLocation();
 		SpringApplication.run(CreativePoolApplication.class, args);
+	}
+
+	private static void printApplicationLocation() {
+		try {
+			URL location = CreativePoolApplication.class.getProtectionDomain().getCodeSource().getLocation();
+			System.out.println("Application is running from: " + location.getPath());
+		} catch (Exception e) {
+			System.err.println("Failed to determine the application location: " + e.getMessage());
+		}
 	}
 
 
