@@ -166,10 +166,10 @@ public class TicketService {
 
             List<String> attendeeEmails=userRepository.findEmailsByClientIdOrFreelancerId(ticket.getClientId(),freelancerId);
 
-          //  String meetingUrl= googleMeetService.createInstantMeeting(attendeeEmails);
+            String meetingUrl= googleMeetService.createInstantMeeting(attendeeEmails);
 
             ticket.setFreelancerId(freelancerId);
-            //ticket.setMeetingUrl(meetingUrl);
+            ticket.setMeetingUrl(meetingUrl);
             ticket.setAssignee(firstname + " " + lastname);
             ticket.setTicketStatus(TicketStatus.IN_PROGRESS);
             Ticket savedTicket = ticketRepository.save(ticket);
