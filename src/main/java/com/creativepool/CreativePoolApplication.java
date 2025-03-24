@@ -31,23 +31,23 @@ public class CreativePoolApplication {
 
 
 	public static void main(String[] args) {
-		listFilesRecursively(new File("/workspace"));
+//		listFilesRecursively(new File("/workspace"));
 		SpringApplication.run(CreativePoolApplication.class, args);
 	}
 
-	private static void listFilesRecursively(File directory) {
-		if (directory != null && directory.isDirectory()) {
-			File[] files = directory.listFiles();
-			if (files != null) {
-				for (File file : files) {
-					System.out.println(file.getAbsolutePath());
-					if (file.isDirectory()) {
-						listFilesRecursively(file);
-					}
-				}
-			}
-		}
-	}
+//	private static void listFilesRecursively(File directory) {
+//		if (directory != null && directory.isDirectory()) {
+//			File[] files = directory.listFiles();
+//			if (files != null) {
+//				for (File file : files) {
+//					System.out.println(file.getAbsolutePath());
+//					if (file.isDirectory()) {
+//						listFilesRecursively(file);
+//					}
+//				}
+//			}
+//		}
+//	}
 
 
 	@Value("${credential.file}")
