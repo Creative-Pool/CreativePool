@@ -36,7 +36,7 @@ public class UserController {
     }
 
     @PostMapping("/create-profile")
-    public ResponseEntity<Void> createProfile(@RequestPart("profile") Profile profile, @RequestPart(value = "file", required = false) MultipartFile file) {
+    public ResponseEntity<Void> createProfile(@RequestPart(value= "profile", required = false) Profile profile, @RequestPart(value = "file", required = false) MultipartFile file) {
         userService.createProfile(profile, file);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
