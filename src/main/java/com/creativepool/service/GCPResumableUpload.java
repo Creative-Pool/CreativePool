@@ -16,10 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,7 +30,7 @@ public class GCPResumableUpload {
     @Value("${spring.cloud.gcp.storage.bucket}")
     private String bucketName;
     public GCPResumableUpload(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
-        FileInputStream serviceAccountStream = new FileInputStream("/workspace/target/classes/" + credentialFile);
+        InputStream serviceAccountStream = getClass().getClassLoader().getResourceAsStream(credentialFile);
         Credentials credentials = GoogleCredentials.fromStream(serviceAccountStream);
         storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)

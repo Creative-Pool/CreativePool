@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -56,8 +57,10 @@ public class CreativePoolApplication {
 	@Bean
 	public RestTemplate restTemplate() throws IOException {
 		// Load the credentials file from the specified path
+
+		InputStream stream = getClass().getClassLoader().getResourceAsStream(credentialsFilePath);
 		GoogleCredentials credentials = GoogleCredentials
-				.fromStream(new FileInputStream("/workspace/target/classes/" + credentialsFilePath))
+				.fromStream(stream)
 				.createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
 
 		return new RestTemplateBuilder()

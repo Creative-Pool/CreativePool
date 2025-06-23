@@ -48,11 +48,12 @@ public class GoogleMeetService {
 
 
     public Credential getCredentials() throws IOException, GeneralSecurityException {
+        InputStream serviceAccountStream = getClass().getClassLoader().getResourceAsStream(googleMeetCredentialsPath);
 
         List<String> SCOPES = Collections.singletonList("https://www.googleapis.com/auth/calendar");
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(
                 jsonFactory,
-                new FileReader(new File("/workspace/target/classes/"+googleMeetCredentialsPath))
+                new InputStreamReader(serviceAccountStream)
         );
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
