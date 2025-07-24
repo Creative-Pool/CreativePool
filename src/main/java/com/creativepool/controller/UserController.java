@@ -9,6 +9,8 @@ import com.creativepool.models.*;
 import com.creativepool.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,8 @@ import java.util.UUID;
 @CrossOrigin(origins = "*")
 @Slf4j
 public class UserController {
+
+    Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     UserService userService;
@@ -82,6 +86,13 @@ public class UserController {
         }
         return ResponseEntity.ok(tokens); // 200 OK with the list of tokens
     }
+
+
+    @GetMapping("/test")
+    public void triggerTest() {
+        logger.info("Api Triggered");
+    }
+
 
 
 }
