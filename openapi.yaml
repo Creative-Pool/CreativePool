@@ -1,1 +1,2229 @@
-{"openapi":"3.0.1","info":{"title":"My Application API","description":"This is a sample Spring Boot application with Swagger OpenAPI documentation.","version":"1.0"},"servers":[{"url":"http://localhost:8080","description":"Generated server url"}],"paths":{"/creative-pool/ticket/close":{"put":{"tags":["ticket-controller"],"operationId":"closeTicket","parameters":[{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/creative-pool/edit-ticket":{"put":{"tags":["ticket-controller"],"operationId":"editTicket","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TicketForm"}}}},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TicketResponseDTO"}}}}}}},"/creative-pool/edit-profile":{"put":{"tags":["user-controller"],"operationId":"editProfile","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ProfileForm"}}}},"responses":{"200":{"description":"OK"}}}},"/comments/{id}":{"put":{"tags":["comment-controller"],"operationId":"editComment","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"requestBody":{"content":{"application/json":{"schema":{"type":"string"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/CommentResponse"}}}}}},"delete":{"tags":["comment-controller"],"operationId":"deleteComment","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"OK"}}}},"/feedback/submitFreelancerFeedback":{"post":{"tags":["feedback-controller"],"operationId":"submitFreelancerFeedback","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/FreelancerFeedbackRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/feedback/submitClientFeedback":{"post":{"tags":["feedback-controller"],"operationId":"submitClientFeedback","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ClientFeedbackRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/creative-pool/{ticketId}/assign":{"post":{"tags":["ticket-controller"],"operationId":"assignTicket","parameters":[{"name":"ticketId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"freelancerId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TicketResponseDTO"}}}}}}},"/creative-pool/ticket/search":{"post":{"tags":["ticket-controller"],"operationId":"searchTickets","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TicketSearchRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/PaginatedResponseTicketSearchResponse"}}}}}}},"/creative-pool/ticket/freelancer-apply":{"post":{"tags":["ticket-controller"],"operationId":"freelancerApplyForTicket","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/FreelancerReachOut"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/FreelancerReachOut"}}}}}}},"/creative-pool/ticket/client-reach-out":{"post":{"tags":["ticket-controller"],"operationId":"clientReachOutToFreelancerForTicket","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ClientReachOut"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/ClientReachOut"}}}}}}},"/creative-pool/freelancer/reject":{"post":{"tags":["ticket-controller"],"operationId":"rejectFreelancerRequest","parameters":[{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"freelancerId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/creative-pool/freelancer-search":{"post":{"tags":["user-controller"],"operationId":"searchFreelancer","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UserSearchRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/PaginatedResponseProfile"}}}}}}},"/creative-pool/files/update-result":{"post":{"tags":["file-controller"],"operationId":"updateResult","parameters":[{"name":"filename","in":"query","required":true,"schema":{"type":"string"}},{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"status","in":"query","required":true,"schema":{"type":"string","enum":["PENDING","SUCCESS","FAILURE"]}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TicketResult"}}}}}}},"/creative-pool/files/resumable":{"post":{"tags":["file-controller"],"operationId":"uploadFile","parameters":[{"name":"filename","in":"query","required":true,"schema":{"type":"string"}},{"name":"fileType","in":"query","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/creative-pool/files/result/resumable":{"post":{"tags":["file-controller"],"operationId":"uploadResultFile","parameters":[{"name":"filename","in":"query","required":true,"schema":{"type":"string"}},{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"fileType","in":"query","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/creative-pool/fcm-token/store":{"post":{"tags":["user-controller"],"operationId":"upsertFcmToken","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/FcmTokenRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/creative-pool/create-user":{"post":{"tags":["user-controller"],"operationId":"createUser","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/User"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Profile"}}}}}}}},"/creative-pool/create-ticket":{"post":{"tags":["ticket-controller"],"operationId":"createTicket","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TicketForm"}}}},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/TicketResponseDTO"}}}}}}}},"/creative-pool/create-profile":{"post":{"tags":["user-controller"],"operationId":"createProfile","requestBody":{"content":{"application/json":{"schema":{"required":["profile"],"type":"object","properties":{"profile":{"$ref":"#/components/schemas/Profile"},"file":{"type":"string","format":"binary"}}}}}},"responses":{"200":{"description":"OK"}}}},"/creative-pool/create-meeting":{"post":{"tags":["meeting-controller"],"operationId":"createGoogleMeeting","requestBody":{"content":{"application/json":{"schema":{"type":"array","items":{"type":"string"}}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/creative-pool/client/reject":{"post":{"tags":["ticket-controller"],"operationId":"rejectClientRequest","parameters":[{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"freelancerId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/comments":{"get":{"tags":["comment-controller"],"operationId":"getComments","parameters":[{"name":"postId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/CommentResponse"}}}}}}},"post":{"tags":["comment-controller"],"operationId":"addComment","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CommentRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/CommentResponse"}}}}}}},"/comments/{id}/report":{"post":{"tags":["comment-controller"],"operationId":"reportComment","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/CommentResponse"}}}}}}},"/comments/{id}/like":{"post":{"tags":["comment-controller"],"operationId":"likeComment","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/CommentResponse"}}}}}}},"/comments/{id}/dislike":{"post":{"tags":["comment-controller"],"operationId":"dislikeComment","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/CommentResponse"}}}}}}},"/generate-token":{"get":{"tags":["jwt-controller"],"operationId":"generateToken","parameters":[{"name":"userId","in":"query","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/creative-pool/tickets":{"get":{"tags":["ticket-controller"],"operationId":"getAllTickets","responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/TicketResponseDTO"}}}}}}}},"/creative-pool/ticket/freelancers-reached-out":{"get":{"tags":["ticket-controller"],"operationId":"getFreelancersReachedOutByClient","parameters":[{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"page","in":"query","required":true,"schema":{"type":"integer","format":"int32"}},{"name":"size","in":"query","required":true,"schema":{"type":"integer","format":"int32"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/PaginatedResponseProfile"}}}}}}},"/creative-pool/ticket/freelancer-received":{"get":{"tags":["ticket-controller"],"operationId":"fetchTicketsReceivedByFreelancers","parameters":[{"name":"freelancerId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"page","in":"query","required":true,"schema":{"type":"integer","format":"int32"}},{"name":"size","in":"query","required":true,"schema":{"type":"integer","format":"int32"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/PaginatedResponseTicketResponseDTO"}}}}}}},"/creative-pool/ticket/freelancer-applied":{"get":{"tags":["ticket-controller"],"operationId":"fetchTicketsAppliedByFreelancers","parameters":[{"name":"freelancerId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"reachOutStatus","in":"query","required":true,"schema":{"type":"string","enum":["APPLIED","APPROVED","REJECTED","WITHDRAW","REQUESTED","CLOSED"]}},{"name":"page","in":"query","required":true,"schema":{"type":"integer","format":"int32"}},{"name":"size","in":"query","required":true,"schema":{"type":"integer","format":"int32"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/PaginatedResponseTicketResponseDTO"}}}}}}},"/creative-pool/ticket/applicants":{"get":{"tags":["ticket-controller"],"operationId":"getApplicantsForTickets","parameters":[{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"page","in":"query","required":true,"schema":{"type":"integer","format":"int32"}},{"name":"size","in":"query","required":true,"schema":{"type":"integer","format":"int32"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/PaginatedResponseProfile"}}}}}}},"/creative-pool/profile":{"get":{"tags":["user-controller"],"operationId":"getProfile","parameters":[{"name":"phoneNo","in":"query","required":true,"schema":{"type":"string"}},{"name":"userType","in":"query","required":true,"schema":{"type":"string","enum":["CLIENT","FREELANCER"]}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Profile"}}}}}}}},"/creative-pool/files/ticket-result":{"get":{"tags":["file-controller"],"operationId":"getTicketResult","parameters":[{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"page","in":"query","required":true,"schema":{"type":"integer","format":"int32"}},{"name":"size","in":"query","required":true,"schema":{"type":"integer","format":"int32"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/PaginatedResponseTicketResult"}}}}}}},"/creative-pool/files/result/download-link":{"get":{"tags":["file-controller"],"operationId":"getDownloadLink","parameters":[{"name":"filename","in":"query","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/creative-pool/fcm-token":{"get":{"tags":["user-controller"],"operationId":"getFcmTokensByUserId","parameters":[{"name":"id","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"userType","in":"query","required":true,"schema":{"type":"string","enum":["CLIENT","FREELANCER"]}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"type":"string"}}}}}}}},"/creative-pool/{ticketId}":{"delete":{"tags":["ticket-controller"],"operationId":"deleteTicket","parameters":[{"name":"ticketId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/creative-pool/freelancer/backoff":{"delete":{"tags":["ticket-controller"],"operationId":"backoffFromTicket","parameters":[{"name":"ticketId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"userType","in":"query","required":true,"schema":{"type":"string","enum":["CLIENT","FREELANCER"]}}],"responses":{"200":{"description":"OK"}}}}},"components":{"schemas":{"TicketDTO":{"type":"object","properties":{"ticketId":{"type":"string","format":"uuid"},"title":{"type":"string"},"description":{"type":"string"},"reporterName":{"type":"string"},"price":{"type":"number","format":"double"},"ticketDeadline":{"type":"string","format":"date-time"},"filenames":{"type":"string"},"url":{"type":"string"},"clientId":{"type":"string","format":"uuid"},"ticketComplexity":{"type":"string"},"deleteUrls":{"type":"array","items":{"type":"string"}},"ticketStatus":{"type":"string","enum":["OPEN","IN_PROGRESS","RESOLVED","CLOSED"]}}},"TicketForm":{"type":"object","properties":{"ticketDTO":{"$ref":"#/components/schemas/TicketDTO"},"files":{"type":"array","items":{"type":"string","format":"binary"}}}},"TicketResponseDTO":{"type":"object","properties":{"ticketID":{"type":"string","format":"uuid"},"title":{"type":"string"},"description":{"type":"string"},"reporterName":{"type":"string"},"createdDate":{"type":"string","format":"date-time"},"price":{"type":"number","format":"double"},"ticketDeadline":{"type":"string","format":"date-time"},"urls":{"type":"array","items":{"type":"string"}},"url":{"type":"string"},"ticketStatus":{"type":"string","enum":["OPEN","IN_PROGRESS","RESOLVED","CLOSED"]},"freelancerId":{"type":"string","format":"uuid"},"clientId":{"type":"string","format":"uuid"},"ticketComplexity":{"type":"string"},"ticketBudget":{"type":"number","format":"double"},"assignee":{"type":"string"},"meetingUrl":{"type":"string"}}},"Profile":{"type":"object","properties":{"username":{"type":"string"},"firstName":{"type":"string"},"lastName":{"type":"string"},"phone":{"type":"string"},"email":{"type":"string"},"profileImage":{"type":"string"},"dateOfBirth":{"type":"string","format":"date-time"},"gender":{"type":"string","enum":["MALE","FEMALE","OTHERS"]},"city":{"type":"string"},"userID":{"type":"string","format":"uuid"},"rating":{"type":"number","format":"double"},"bio":{"type":"string"},"clientId":{"type":"string","format":"uuid"},"freelancerId":{"type":"string","format":"uuid"},"userType":{"type":"string","enum":["CLIENT","FREELANCER"]},"educationalQualification":{"type":"string","enum":["HIGH_SCHOOL","BACHELORS","MASTERS","PhD","OTHERS"]},"minCharges":{"type":"number"},"workHistory":{"type":"array","items":{"$ref":"#/components/schemas/WorkHistory"}}}},"ProfileForm":{"type":"object","properties":{"profile":{"$ref":"#/components/schemas/Profile"},"file":{"type":"string","format":"binary"}}},"WorkHistory":{"type":"object","properties":{"ticketTitle":{"type":"string"},"ticketComplexity":{"type":"string"},"rating":{"type":"number","format":"double"}}},"CommentResponse":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"postId":{"type":"string","format":"uuid"},"userId":{"type":"string","format":"uuid"},"parentCommentId":{"type":"string","format":"uuid"},"content":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"},"status":{"type":"string"},"imageLink":{"type":"string"},"videoLink":{"type":"string"},"likeCount":{"type":"integer","format":"int32"},"dislikeCount":{"type":"integer","format":"int32"},"replies":{"type":"array","items":{"$ref":"#/components/schemas/CommentResponse"}}}},"FreelancerFeedbackRequest":{"type":"object","properties":{"ticketId":{"type":"string","format":"uuid"},"freelancerId":{"type":"string","format":"uuid"},"overallRating":{"type":"number"},"projectOutcome":{"type":"string"},"creativityRating":{"type":"number"},"technicalSkillsRating":{"type":"number"},"communicationRating":{"type":"number"},"responsivenessRating":{"type":"number"},"professionalismRating":{"type":"number"},"deadlineAdherence":{"type":"boolean"},"timeManagementRating":{"type":"number"},"strengths":{"type":"string"},"areasForImprovement":{"type":"string"}}},"ClientFeedbackRequest":{"type":"object","properties":{"ticketId":{"type":"string","format":"uuid"},"clientId":{"type":"string","format":"uuid"},"overallRating":{"type":"number"},"communicationRating":{"type":"number"},"responsivenessRating":{"type":"number"},"professionalismRating":{"type":"number"},"paymentTimeliness":{"type":"boolean"},"projectScopeRating":{"type":"number"},"strengths":{"type":"string"},"areasForImprovement":{"type":"string"}}},"TicketSearchRequest":{"type":"object","properties":{"rating":{"type":"number","format":"double"},"searchType":{"type":"string"},"complexity":{"type":"string"},"priceRange":{"type":"string"},"ticketStatus":{"type":"string","enum":["OPEN","IN_PROGRESS","RESOLVED","CLOSED"]},"dates":{"type":"string"},"clientOrFreelancerId":{"type":"string","format":"uuid"},"page":{"type":"integer","format":"int32"},"size":{"type":"integer","format":"int32"}}},"PaginatedResponseTicketSearchResponse":{"type":"object","properties":{"totalElements":{"type":"integer","format":"int64"},"items":{"type":"array","items":{"$ref":"#/components/schemas/TicketSearchResponse"}},"currentPage":{"type":"integer","format":"int32"},"totalPages":{"type":"integer","format":"int32"},"lastPage":{"type":"boolean"}}},"TicketSearchResponse":{"type":"object","properties":{"ticketID":{"type":"string","format":"uuid"},"title":{"type":"string"},"description":{"type":"string"},"reporterName":{"type":"string"},"createdDate":{"type":"string","format":"date-time"},"price":{"type":"number","format":"double"},"ticketDeadline":{"type":"string","format":"date-time"},"images":{"type":"string"},"url":{"type":"string"},"ticketStatus":{"type":"string","enum":["OPEN","IN_PROGRESS","RESOLVED","CLOSED"]},"freelancerId":{"type":"string","format":"uuid"},"clientId":{"type":"string","format":"uuid"},"assignee":{"type":"string"},"rating":{"type":"number","format":"double"},"ticketComplexity":{"type":"string"},"meetingUrl":{"type":"string"}}},"FreelancerReachOut":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"freelancerId":{"type":"string","format":"uuid"},"clientId":{"type":"string","format":"uuid"},"ticketId":{"type":"string","format":"uuid"},"reachedOutAt":{"type":"string","format":"date-time"},"reachOutStatus":{"type":"string","enum":["APPLIED","APPROVED","REJECTED","WITHDRAW","REQUESTED","CLOSED"]}}},"ClientReachOut":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"clientId":{"type":"string","format":"uuid"},"freelancerId":{"type":"string","format":"uuid"},"ticketId":{"type":"string","format":"uuid"},"reachedOutAt":{"type":"string","format":"date-time"},"reachOutStatus":{"type":"string","enum":["APPLIED","APPROVED","REJECTED","WITHDRAW","REQUESTED","CLOSED"]}}},"UserSearchRequest":{"type":"object","properties":{"rating":{"type":"number","format":"double"},"priceRange":{"type":"string"},"username":{"type":"string"},"firstname":{"type":"string"},"lastname":{"type":"string"},"page":{"type":"integer","format":"int32"},"size":{"type":"integer","format":"int32"}}},"PaginatedResponseProfile":{"type":"object","properties":{"totalElements":{"type":"integer","format":"int64"},"items":{"type":"array","items":{"$ref":"#/components/schemas/Profile"}},"currentPage":{"type":"integer","format":"int32"},"totalPages":{"type":"integer","format":"int32"},"lastPage":{"type":"boolean"}}},"TicketResult":{"type":"object","properties":{"resultId":{"type":"string","format":"uuid"},"ticketId":{"type":"string","format":"uuid"},"filename":{"type":"string"},"lastUpload":{"type":"string","format":"date-time"},"status":{"type":"string","enum":["PENDING","SUCCESS","FAILURE"]}}},"FcmTokenRequest":{"type":"object","properties":{"userId":{"type":"string","format":"uuid"},"deviceId":{"type":"string"},"fcmToken":{"type":"string"}}},"User":{"type":"object","properties":{"username":{"type":"string"},"firstName":{"type":"string"},"lastName":{"type":"string"},"phone":{"type":"string"},"email":{"type":"string"},"profileImage":{"type":"string"},"createdDate":{"type":"string","format":"date-time"},"updatedDate":{"type":"string","format":"date-time"},"dateOfBirth":{"type":"string","format":"date-time"},"gender":{"type":"string","enum":["MALE","FEMALE","OTHERS"]},"city":{"type":"string"},"userType":{"type":"string","enum":["CLIENT","FREELANCER"]}}},"CommentRequest":{"type":"object","properties":{"postId":{"type":"string","format":"uuid"},"userId":{"type":"string","format":"uuid"},"parentCommentId":{"type":"string","format":"uuid"},"content":{"type":"string"},"imageLink":{"type":"string"},"videoLink":{"type":"string"}}},"PaginatedResponseTicketResponseDTO":{"type":"object","properties":{"totalElements":{"type":"integer","format":"int64"},"items":{"type":"array","items":{"$ref":"#/components/schemas/TicketResponseDTO"}},"currentPage":{"type":"integer","format":"int32"},"totalPages":{"type":"integer","format":"int32"},"lastPage":{"type":"boolean"}}},"PaginatedResponseTicketResult":{"type":"object","properties":{"totalElements":{"type":"integer","format":"int64"},"items":{"type":"array","items":{"$ref":"#/components/schemas/TicketResult"}},"currentPage":{"type":"integer","format":"int32"},"totalPages":{"type":"integer","format":"int32"},"lastPage":{"type":"boolean"}}}}}}
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "My Application API",
+    "description": "This is a sample Spring Boot application with Swagger OpenAPI documentation.",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/creative-pool/ticket/close": {
+      "put": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "closeTicket",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/creative-pool/edit-ticket": {
+      "put": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "editTicket",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketForm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/edit-profile": {
+      "put": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "editProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileForm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/comments/{id}": {
+      "put": {
+        "tags": [
+          "comment-controller"
+        ],
+        "operationId": "editComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "comment-controller"
+        ],
+        "operationId": "deleteComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/feedback/submitFreelancerFeedback": {
+      "post": {
+        "tags": [
+          "feedback-controller"
+        ],
+        "operationId": "submitFreelancerFeedback",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreelancerFeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback/submitClientFeedback": {
+      "post": {
+        "tags": [
+          "feedback-controller"
+        ],
+        "operationId": "submitClientFeedback",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientFeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/{ticketId}/assign": {
+      "post": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "assignTicket",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "freelancerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/ticket/search": {
+      "post": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "searchTickets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseTicketSearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/ticket/freelancer-apply": {
+      "post": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "freelancerApplyForTicket",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreelancerReachOut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FreelancerReachOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/ticket/client-reach-out": {
+      "post": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "clientReachOutToFreelancerForTicket",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientReachOut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientReachOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/freelancer/reject": {
+      "post": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "rejectFreelancerRequest",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "freelancerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/creative-pool/freelancer-search": {
+      "post": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "searchFreelancer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseProfile"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/files/update-result": {
+      "post": {
+        "tags": [
+          "file-controller"
+        ],
+        "operationId": "updateResult",
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "SUCCESS",
+                "FAILURE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/files/resumable": {
+      "post": {
+        "tags": [
+          "file-controller"
+        ],
+        "operationId": "uploadFile",
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/files/result/resumable": {
+      "post": {
+        "tags": [
+          "file-controller"
+        ],
+        "operationId": "uploadResultFile",
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/fcm-token/store": {
+      "post": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "upsertFcmToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FcmTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/create-user": {
+      "post": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "createUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Profile"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/create-ticket": {
+      "post": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "createTicket",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketForm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/create-profile": {
+      "post": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "createProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "profile"
+                ],
+                "type": "object",
+                "properties": {
+                  "profile": {
+                    "$ref": "#/components/schemas/Profile"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/creative-pool/create-meeting": {
+      "post": {
+        "tags": [
+          "meeting-controller"
+        ],
+        "operationId": "createGoogleMeeting",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/client/reject": {
+      "post": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "rejectClientRequest",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "freelancerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/comments": {
+      "get": {
+        "tags": [
+          "comment-controller"
+        ],
+        "operationId": "getComments",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "comment-controller"
+        ],
+        "operationId": "addComment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{id}/report": {
+      "post": {
+        "tags": [
+          "comment-controller"
+        ],
+        "operationId": "reportComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{id}/like": {
+      "post": {
+        "tags": [
+          "comment-controller"
+        ],
+        "operationId": "likeComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{id}/dislike": {
+      "post": {
+        "tags": [
+          "comment-controller"
+        ],
+        "operationId": "dislikeComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate-token": {
+      "get": {
+        "tags": [
+          "jwt-controller"
+        ],
+        "operationId": "generateToken",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/tickets": {
+      "get": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "getAllTickets",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/ticket/freelancers-reached-out": {
+      "get": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "getFreelancersReachedOutByClient",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseProfile"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/ticket/freelancer-received": {
+      "get": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "fetchTicketsReceivedByFreelancers",
+        "parameters": [
+          {
+            "name": "freelancerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseTicketResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/ticket/freelancer-applied": {
+      "get": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "fetchTicketsAppliedByFreelancers",
+        "parameters": [
+          {
+            "name": "freelancerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "reachOutStatus",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "APPLIED",
+                "APPROVED",
+                "REJECTED",
+                "WITHDRAW",
+                "REQUESTED",
+                "CLOSED"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseTicketResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/ticket/applicants": {
+      "get": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "getApplicantsForTickets",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseProfile"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/profile": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "getProfile",
+        "parameters": [
+          {
+            "name": "phoneNo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CLIENT",
+                "FREELANCER"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Profile"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/test": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "triggerTest",
+        "summary": "Trigger test API for logging",
+        "description": "Logs a message when this endpoint is called",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/creative-pool/files/ticket-result": {
+      "get": {
+        "tags": [
+          "file-controller"
+        ],
+        "operationId": "getTicketResult",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseTicketResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/files/result/download-link": {
+      "get": {
+        "tags": [
+          "file-controller"
+        ],
+        "operationId": "getDownloadLink",
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/fcm-token": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "getFcmTokensByUserId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CLIENT",
+                "FREELANCER"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/creative-pool/{ticketId}": {
+      "delete": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "deleteTicket",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/creative-pool/freelancer/backoff": {
+      "delete": {
+        "tags": [
+          "ticket-controller"
+        ],
+        "operationId": "backoffFromTicket",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CLIENT",
+                "FREELANCER"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TicketDTO": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "reporterName": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "ticketDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "filenames": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ticketComplexity": {
+            "type": "string"
+          },
+          "deleteUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ticketStatus": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED"
+            ]
+          }
+        }
+      },
+      "TicketForm": {
+        "type": "object",
+        "properties": {
+          "ticketDTO": {
+            "$ref": "#/components/schemas/TicketDTO"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      },
+      "TicketResponseDTO": {
+        "type": "object",
+        "properties": {
+          "ticketID": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "reporterName": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "ticketDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "url": {
+            "type": "string"
+          },
+          "ticketStatus": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED"
+            ]
+          },
+          "freelancerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ticketComplexity": {
+            "type": "string"
+          },
+          "ticketBudget": {
+            "type": "number",
+            "format": "double"
+          },
+          "assignee": {
+            "type": "string"
+          },
+          "meetingUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHERS"
+            ]
+          },
+          "city": {
+            "type": "string"
+          },
+          "userID": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "freelancerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "CLIENT",
+              "FREELANCER"
+            ]
+          },
+          "educationalQualification": {
+            "type": "string",
+            "enum": [
+              "HIGH_SCHOOL",
+              "BACHELORS",
+              "MASTERS",
+              "PhD",
+              "OTHERS"
+            ]
+          },
+          "minCharges": {
+            "type": "number"
+          },
+          "workHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkHistory"
+            }
+          }
+        }
+      },
+      "ProfileForm": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/Profile"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "WorkHistory": {
+        "type": "object",
+        "properties": {
+          "ticketTitle": {
+            "type": "string"
+          },
+          "ticketComplexity": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CommentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "postId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentCommentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "imageLink": {
+            "type": "string"
+          },
+          "videoLink": {
+            "type": "string"
+          },
+          "likeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dislikeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "replies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentResponse"
+            }
+          }
+        }
+      },
+      "FreelancerFeedbackRequest": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "freelancerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "overallRating": {
+            "type": "number"
+          },
+          "projectOutcome": {
+            "type": "string"
+          },
+          "creativityRating": {
+            "type": "number"
+          },
+          "technicalSkillsRating": {
+            "type": "number"
+          },
+          "communicationRating": {
+            "type": "number"
+          },
+          "responsivenessRating": {
+            "type": "number"
+          },
+          "professionalismRating": {
+            "type": "number"
+          },
+          "deadlineAdherence": {
+            "type": "boolean"
+          },
+          "timeManagementRating": {
+            "type": "number"
+          },
+          "strengths": {
+            "type": "string"
+          },
+          "areasForImprovement": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientFeedbackRequest": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "overallRating": {
+            "type": "number"
+          },
+          "communicationRating": {
+            "type": "number"
+          },
+          "responsivenessRating": {
+            "type": "number"
+          },
+          "professionalismRating": {
+            "type": "number"
+          },
+          "paymentTimeliness": {
+            "type": "boolean"
+          },
+          "projectScopeRating": {
+            "type": "number"
+          },
+          "strengths": {
+            "type": "string"
+          },
+          "areasForImprovement": {
+            "type": "string"
+          }
+        }
+      },
+      "TicketSearchRequest": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "searchType": {
+            "type": "string"
+          },
+          "complexity": {
+            "type": "string"
+          },
+          "priceRange": {
+            "type": "string"
+          },
+          "ticketStatus": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED"
+            ]
+          },
+          "dates": {
+            "type": "string"
+          },
+          "clientOrFreelancerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginatedResponseTicketSearchResponse": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketSearchResponse"
+            }
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TicketSearchResponse": {
+        "type": "object",
+        "properties": {
+          "ticketID": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "reporterName": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "ticketDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "images": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "ticketStatus": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED"
+            ]
+          },
+          "freelancerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignee": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "ticketComplexity": {
+            "type": "string"
+          },
+          "meetingUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "FreelancerReachOut": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "freelancerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ticketId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reachedOutAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reachOutStatus": {
+            "type": "string",
+            "enum": [
+              "APPLIED",
+              "APPROVED",
+              "REJECTED",
+              "WITHDRAW",
+              "REQUESTED",
+              "CLOSED"
+            ]
+          }
+        }
+      },
+      "ClientReachOut": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "freelancerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ticketId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reachedOutAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reachOutStatus": {
+            "type": "string",
+            "enum": [
+              "APPLIED",
+              "APPROVED",
+              "REJECTED",
+              "WITHDRAW",
+              "REQUESTED",
+              "CLOSED"
+            ]
+          }
+        }
+      },
+      "UserSearchRequest": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "priceRange": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginatedResponseProfile": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Profile"
+            }
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TicketResult": {
+        "type": "object",
+        "properties": {
+          "resultId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ticketId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "lastUpload": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUCCESS",
+              "FAILURE"
+            ]
+          }
+        }
+      },
+      "FcmTokenRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "fcmToken": {
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHERS"
+            ]
+          },
+          "city": {
+            "type": "string"
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "CLIENT",
+              "FREELANCER"
+            ]
+          }
+        }
+      },
+      "CommentRequest": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentCommentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "content": {
+            "type": "string"
+          },
+          "imageLink": {
+            "type": "string"
+          },
+          "videoLink": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginatedResponseTicketResponseDTO": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketResponseDTO"
+            }
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaginatedResponseTicketResult": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketResult"
+            }
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastPage": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
