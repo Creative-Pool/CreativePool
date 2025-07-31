@@ -2,7 +2,9 @@ package com.creativepool.service;
 
 import com.creativepool.constants.CreativepoolConstants;
 import com.creativepool.constants.Errors;
+import com.creativepool.entity.AppToken;
 import com.creativepool.exception.CreativePoolException;
+import com.creativepool.repository.AppTokenRepository;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -32,6 +34,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GoogleMeetService {
@@ -46,25 +49,83 @@ public class GoogleMeetService {
     @Value("${token.directory.path}")
     private String getTokensDirectoryPath;
 
+    @Autowired
+    private AppTokenRepository appTokenRepository;
 
+    
     public Credential getCredentials() throws IOException, GeneralSecurityException {
-        InputStream serviceAccountStream = getClass().getClassLoader().getResourceAsStream(googleMeetCredentialsPath);
+        // Load client secrets from JSON
+        InputStream clientSecretStream =
+                getClass().getClassLoader().getResourceAsStream(googleMeetCredentialsPath);
 
-        List<String> SCOPES = Collections.singletonList("https://www.googleapis.com/auth/calendar");
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(
                 jsonFactory,
-                new InputStreamReader(serviceAccountStream)
+                new InputStreamReader(clientSecretStream)
         );
 
+        List<String> SCOPES = Collections.singletonList("https://www.googleapis.com/auth/calendar");
+
+        // Create the authorization flow
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(), jsonFactory, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(getTokensDirectoryPath)))
+                GoogleNetHttpTransport.newTrustedTransport(),
+                jsonFactory,
+                clientSecrets,
+                SCOPES
+        )
                 .setAccessType("offline")
+                .setApprovalPrompt("force")
                 .build();
 
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8090).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+        // ✅ Check if token already exists in DB
+        Optional<AppToken> tokenOpt = appTokenRepository.findByProvider("google_calendar");
+
+        if (tokenOpt.isPresent()) {
+            AppToken token = tokenOpt.get();
+
+            // ✅ Manually build Credential with token server URL
+            Credential credential = new Credential.Builder(flow.getMethod())
+                    .setTransport(GoogleNetHttpTransport.newTrustedTransport())
+                    .setJsonFactory(jsonFactory)
+                    .setClientAuthentication(flow.getClientAuthentication())
+                    .setTokenServerEncodedUrl("https://oauth2.googleapis.com/token") // ✅ Required
+                    .build();
+
+            credential.setRefreshToken(token.getRefreshToken());
+
+            // ✅ Generate a new access token
+            credential.refreshToken();
+
+            // ✅ Save new access token and expiry
+            token.setAccessToken(credential.getAccessToken());
+            token.setExpiresAt(Instant.now().plusSeconds(3500)); // ~1 hour validity
+            appTokenRepository.save(token);
+
+            return credential;
+        } else {
+            // ✅ First-time OAuth browser flow
+            Credential credential = new AuthorizationCodeInstalledApp(
+                    flow,
+                    new LocalServerReceiver.Builder().setPort(8090).build()
+            ).authorize("user");
+
+            // ✅ Save refresh token for future use
+            AppToken token = AppToken.builder()
+                    .provider("google_calendar")
+                    .refreshToken(credential.getRefreshToken())
+                    .accessToken(credential.getAccessToken())
+                    .expiresAt(Instant.now().plusSeconds(3500))
+                    .build();
+
+            appTokenRepository.save(token);
+
+            return credential;
+        }
     }
+
+
+
+
+
 
     public Calendar getCalendarService() throws GeneralSecurityException, IOException {
         return new Calendar.Builder(GoogleNetHttpTransport.newTrustedTransport(), jsonFactory, getCredentials())
