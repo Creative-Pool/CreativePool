@@ -4,6 +4,7 @@ import com.creativepool.entity.Client;
 import com.creativepool.entity.Freelancer;
 import com.creativepool.entity.UserEntity;
 
+import com.creativepool.entity.UserType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +23,10 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     public UserEntity findByUsername(String username);
 
     @Transactional(isolation = Isolation.READ_UNCOMMITTED)
-    public UserEntity findByPhone(String phoneNumber);
+    public UserEntity findByPhone(String phoneNumber,String email);
+
+    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
+    public UserEntity findByPhoneAndUserType(String phone, UserType userType);
 
 
    @Query(value = "SELECT * FROM public.search_freelancer_data(:rating,:min_charges,:max_charges,:username,:firstname,:lastname, :page, :size)", nativeQuery = true)

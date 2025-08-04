@@ -41,7 +41,6 @@ public class UserService {
     @Autowired
     ClientRepository clientRepository;
 
-
     @Value("${spring.cloud.gcp.storage.bucket}")
     private String bucketName;
 
@@ -68,7 +67,7 @@ public class UserService {
         try {
             if (ObjectUtils.isEmpty(user))
                 throw new BadRequestException(Errors.E00001.getMessage());
-            UserEntity userEntity = userRepository.findByPhone(user.getPhone());
+            UserEntity userEntity = userRepository.findByPhoneAndUserType(user.getPhone(), user.getUserType());
             if (!ObjectUtils.isEmpty(userEntity))
                 throw new BadRequestException(Errors.E00003.getMessage());
 
