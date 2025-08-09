@@ -8,6 +8,7 @@ import com.creativepool.exception.CreativePoolException;
 import com.creativepool.models.PaginatedResponse;
 import com.creativepool.service.CloudStorageService;
 import com.creativepool.service.GCPResumableUpload;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/creative-pool/files")
+@Slf4j
 public class FileController {
 
     @Autowired
@@ -101,6 +103,7 @@ public class FileController {
             String url = cloudStorageService.resumableUpload(filename, fileType);
             return new ResponseEntity<>(url, HttpStatus.OK);
         } catch (Exception ex) {
+            log.info("Error while working on resumable:", ex);
             throw new CreativePoolException(ex.getMessage());
         }
     }
