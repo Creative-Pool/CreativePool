@@ -23,7 +23,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     public UserEntity findByUsername(String username);
 
     @Transactional(isolation = Isolation.READ_UNCOMMITTED)
-    public UserEntity findByPhone(String phoneNumber,String email);
+    public UserEntity findByPhone(String phoneNumber);
 
     @Transactional(isolation = Isolation.READ_UNCOMMITTED)
     public UserEntity findByPhoneAndUserType(String phone, UserType userType);
