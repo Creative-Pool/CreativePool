@@ -49,7 +49,13 @@ public class CloudStorageService {
     Logger logger= LoggerFactory.getLogger(CloudStorageService.class);
 
     public CloudStorageService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
-        InputStream serviceAccountStream = getClass().getClassLoader().getResourceAsStream(credentialFile);
+        InputStream serviceAccountStream;
+        try {
+            serviceAccountStream = getClass().getClassLoader().getResourceAsStream(credentialFile);
+        }
+        catch (Exception e) {
+            serviceAccountStream = new FileInputStream(credentialFile);
+        }
         Credentials credentials = GoogleCredentials.fromStream(serviceAccountStream);
         storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
