@@ -50,7 +50,7 @@ public class CloudStorageService {
 
     public CloudStorageService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
         InputStream serviceAccountStream = new FileInputStream(credentialFile);
-
+        logger.info(serviceAccountStream.toString());
         Credentials credentials = GoogleCredentials.fromStream(serviceAccountStream);
         storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
