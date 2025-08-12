@@ -25,58 +25,52 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
+
 @SpringBootApplication
 public class CreativePoolApplication {
 
 
-	public static void main(String[] args) {
-		listFilesRecursively(new File("/workspace"));
-		SpringApplication.run(CreativePoolApplication.class, args);
-	}
+    public static void main(String[] args) {
+        listFilesRecursively(new File("/workspace"));
+        SpringApplication.run(CreativePoolApplication.class, args);
+    }
 
-	private static void listFilesRecursively(File directory) {
-		if (directory != null && directory.isDirectory()) {
-			File[] files = directory.listFiles();
-			if (files != null) {
-				for (File file : files) {
-					System.out.println(file.getAbsolutePath());
-					if (file.isDirectory()) {
-						listFilesRecursively(file);
-					}
-				}
-			}
-		}
-	}
+    private static void listFilesRecursively(File directory) {
+        if (directory != null && directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    System.out.println(file.getAbsolutePath());
+                    if (file.isDirectory()) {
+                        listFilesRecursively(file);
+                    }
+                }
+            }
+        }
+    }
 
 
-	@Value("${credential.file}")
-	private String credentialsFilePath;
+    @Value("${credential.file}")
+    private String credentialsFilePath;
 
-	@Bean
-	public RestTemplate restTemplate() throws IOException {
-		// Load the credentials file from the specified path
+    @Bean
+    public RestTemplate restTemplate() throws IOException {
+        // Load the credentials file from the specified path
 
-		InputStream stream;
-		try {
-			stream = getClass().getClassLoader().getResourceAsStream(credentialsFilePath);
-		}
-		catch (Exception e) {
-			String json = System.getenv(credentialsFilePath);
-			stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-		}
-		GoogleCredentials credentials = GoogleCredentials
-				.fromStream(stream)
-				.createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
+        InputStream stream = new FileInputStream(credentialsFilePath);
+        GoogleCredentials credentials = GoogleCredentials
+                .fromStream(stream)
+                .createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
 
-		return new RestTemplateBuilder()
-				.interceptors((request, body, execution) -> {
-					// Refresh the credentials if the access token is expired
-					credentials.refreshIfExpired();
-					// Set the Bearer token for authorization
-					request.getHeaders().setBearerAuth(credentials.getAccessToken().getTokenValue());
-					return execution.execute(request, body);
-				})
-				.build();
+        return new RestTemplateBuilder()
+                .interceptors((request, body, execution) -> {
+                    // Refresh the credentials if the access token is expired
+                    credentials.refreshIfExpired();
+                    // Set the Bearer token for authorization
+                    request.getHeaders().setBearerAuth(credentials.getAccessToken().getTokenValue());
+                    return execution.execute(request, body);
+                })
+                .build();
 
 //		GoogleCredentials credentials = GoogleCredentials
 //				.fromStream(new FileInputStream("src/main/resources/your-credentials.json"))
@@ -89,7 +83,7 @@ public class CreativePoolApplication {
 //
 //		// Create and return a RestTemplate
 //		return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
-		 }
+    }
 
 
 }

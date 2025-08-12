@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.net.MalformedURLException;
 
 
-
 @Service
 public class CloudStorageService {
 
@@ -47,17 +46,11 @@ public class CloudStorageService {
     @Autowired
     RestTemplate restTemplate;
 
-    Logger logger= LoggerFactory.getLogger(CloudStorageService.class);
+    Logger logger = LoggerFactory.getLogger(CloudStorageService.class);
 
     public CloudStorageService(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
-        InputStream serviceAccountStream;
-        try {
-            serviceAccountStream = getClass().getClassLoader().getResourceAsStream(credentialFile);
-        }
-        catch (Exception e) {
-            String json = System.getenv(credentialFile);
-            serviceAccountStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        }
+        InputStream serviceAccountStream = new FileInputStream(credentialFile);
+
         Credentials credentials = GoogleCredentials.fromStream(serviceAccountStream);
         storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
@@ -90,7 +83,7 @@ public class CloudStorageService {
         deleteFile(bucketName, fileName);
     }
 
-    public  String getFilenameFromSignedUrl(String signedUrl) throws MalformedURLException {
+    public String getFilenameFromSignedUrl(String signedUrl) throws MalformedURLException {
 
         String[] parts = signedUrl.split("/");
         String encodedFileName = parts[parts.length - 1].split("\\?")[0];
@@ -101,7 +94,7 @@ public class CloudStorageService {
     }
 
     public String generateSignedUrl(String fileName) throws IOException {
-        if(!StringUtils.isEmpty(fileName)) {
+        if (!StringUtils.isEmpty(fileName)) {
             BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, fileName).build();
             URL signedUrl = storage.signUrl(
                     blobInfo,
@@ -115,13 +108,13 @@ public class CloudStorageService {
         return null;
     }
 
-    public Blob getBlob(String filename){
+    public Blob getBlob(String filename) {
         return storage.get(BlobId.of(bucketName, filename));
 
     }
 
 
-    public String generateSignedUrlForUpload(String objectName){
+    public String generateSignedUrlForUpload(String objectName) {
 
         BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, objectName).build();
 
@@ -143,11 +136,10 @@ public class CloudStorageService {
         System.out.println("Signed URL: " + signedUrl.toString());
 
 
-
         return signedUrl.toString();
     }
 
-    public String resumableUpload(String filename,String fileType) throws URISyntaxException {
+    public String resumableUpload(String filename, String fileType) throws URISyntaxException {
 
         BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, filename).build();
         // Create the resumable upload session URL
