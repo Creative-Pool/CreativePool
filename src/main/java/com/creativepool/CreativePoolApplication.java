@@ -57,7 +57,8 @@ public class CreativePoolApplication {
     public RestTemplate restTemplate() throws IOException {
         // Load the credentials file from the specified path
 
-        InputStream stream = new FileInputStream(credentialsFilePath);
+        String json = System.getenv(credentialsFilePath);
+        InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         GoogleCredentials credentials = GoogleCredentials
                 .fromStream(stream)
                 .createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));

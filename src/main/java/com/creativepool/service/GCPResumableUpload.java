@@ -20,6 +20,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +31,8 @@ public class GCPResumableUpload {
     @Value("${spring.cloud.gcp.storage.bucket}")
     private String bucketName;
     public GCPResumableUpload(@Value("${credential.file}") String credentialFile, @Value("${project.id}") String projectId) throws IOException {
-        InputStream serviceAccountStream = getClass().getClassLoader().getResourceAsStream(credentialFile);
+        String json = System.getenv(credentialFile);
+        InputStream serviceAccountStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         Credentials credentials = GoogleCredentials.fromStream(serviceAccountStream);
         storage = StorageOptions.newBuilder()
                 .setCredentials(credentials)
