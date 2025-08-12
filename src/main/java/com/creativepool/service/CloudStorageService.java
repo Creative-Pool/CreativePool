@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,7 +55,8 @@ public class CloudStorageService {
             serviceAccountStream = getClass().getClassLoader().getResourceAsStream(credentialFile);
         }
         catch (Exception e) {
-            serviceAccountStream = new FileInputStream(credentialFile);
+            String json = System.getenv(credentialFile);
+            serviceAccountStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         }
         Credentials credentials = GoogleCredentials.fromStream(serviceAccountStream);
         storage = StorageOptions.newBuilder()

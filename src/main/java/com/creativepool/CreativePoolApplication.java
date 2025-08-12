@@ -19,11 +19,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,7 +61,8 @@ public class CreativePoolApplication {
 			stream = getClass().getClassLoader().getResourceAsStream(credentialsFilePath);
 		}
 		catch (Exception e) {
-			stream = new FileInputStream(credentialsFilePath);
+			String json = System.getenv(credentialsFilePath);
+			stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
 		}
 		GoogleCredentials credentials = GoogleCredentials
 				.fromStream(stream)
